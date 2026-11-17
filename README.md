@@ -108,3 +108,5 @@ This is a working demo, with simulated issuance, funding, FX quotes, and contrib
 PAN and CVV are intentionally absent from the database. Revealed card details are visibly marked demo data. SQLite suits a single persistent local/server instance; use PostgreSQL and row-level locking for multiple app instances, with idempotent receipts and notifications dispatched through an outbox after authorization.
 # retrest-v2
 # retrest-v2
+# retrest-v2
+# retrest-v2
