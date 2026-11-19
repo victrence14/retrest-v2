@@ -1,0 +1,16 @@
+{
+  "name": "@retrest/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tokens.json": "./tokens.json",
+    "./theme.css": "./generated/theme.css",
+    "./base.css": "./src/base.css",
+    "./react": "./src/theme.tsx",
+    "./vite": "./vite.ts"
+  },
+  "peerDependencies": { "react": "^19.2.0" },
+  "devDependencies": { "@types/react": "^19.2.0", "vite": "^7.3.0" },
+  "scripts": { "typecheck": "tsc --noEmit" }
+}

@@ -1,0 +1,6 @@
+/* Presentation only for the exported component reference sheet. */
+.reference { padding-block: var(--space-7); }
+.reference-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+.reference-hover { filter: brightness(1.08); }
+.reference-focus { outline: 3px solid var(--color-focus); outline-offset: var(--space-1); }
+@media (max-width: 800px) { .reference-grid { grid-template-columns: 1fr; } }

@@ -1,0 +1,266 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import {
+  Shield, ShieldCheck, ShieldOff, Users, ChartNoAxesCombined, ArrowUpRight,
+  ArrowRight, ArrowDownLeft, Plus, ChevronDown, ChevronRight, Bell, Search,
+  Eye, EyeOff, Copy, Check, X, Zap, CreditCard, LockKeyhole, CircleHelp,
+  SlidersHorizontal, RefreshCw, Download, FileText, Wallet, Globe, CheckCheck,
+  Play, LoaderCircle, Sparkles, Pause, Link as LinkIcon, Activity, CheckCircle2,
+  TriangleAlert, CircleDollarSign, Settings2, ExternalLink, BriefcaseBusiness,
+} from "lucide-react";
+import type { Dashboard, Subscription, Pool, Currency, AuthorizationDecision } from "@/lib/types";
+import { money, daysUntil, relativeTime, shortDate } from "@/lib/format";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { MessageCircle } from "lucide-react";
+import { workspacePages, type WorkspaceSection } from "@/lib/navigation";
+import { usePreviewAccount } from "@/lib/preview-account";
+import AccountSettings from "@/components/account-settings";
+import TransactionHistory from "@/components/transaction-history";
+import SupportChat from "@/components/support-chat";
+import SpendSummary from "@/components/spend-summary";
+
+type Tab = WorkspaceSection;
+type Modal = "demo" | "fund" | "create-pool" | "add" | "notifications" | "help" | "chat" | "summary" | null;
+type DemoResult = AuthorizationDecision & { duration_ms: number; http_status: number };
+let sessionPromise: Promise<Response> | null = null;
+async function api(url: string, method = "GET", body?: unknown) {
+  if (!sessionPromise) sessionPromise = fetch("/api/session", { method: "POST" });
+  await sessionPromise;
+  const response = await fetch(url, { method, headers: body ? { "Content-Type": "application/json" } : undefined, body: body ? JSON.stringify(body) : undefined });
+  const value = await response.json();
+  if (!response.ok) throw new Error(value.error ?? "Something went wrong. Please try again.");
+  return value;
+}
+
+function Brand({ compact = false }: { compact?: boolean }) {
+  return <div className={`brand ${compact ? "compact" : ""}`}><span className="brand-symbol"><ShieldCheck size={23} strokeWidth={2.2} /></span>{!compact && <span>retrest<span className="brand-dot">.</span></span>}</div>;
+}
+
+function MerchantLogo({ name, small = false }: { name: string; small?: boolean }) {
+  const key = name.toLowerCase();
+  return <span className={`merchant-logo ${small ? "small" : ""} logo-${key.includes("amazon") ? "aws" : key.split(" ")[0]}`}>
+    {key.includes("netflix") ? <b className="netflix-n">N</b> : key.includes("spotify") ? <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#1ed760"/><path d="M8 12c6-2 12-1 17 2M9 17c5-2 10-1 14 1M11 21c4-1 7-1 10 1" fill="none" stroke="#14271c" strokeWidth="2.4" strokeLinecap="round"/></svg> : key.includes("chatgpt") ? <svg viewBox="0 0 32 32" aria-hidden="true"><g stroke="currentColor" strokeWidth="1.7" fill="none">{[0,60,120].map(n => <path key={n} transform={`rotate(${n} 16 16)`} d="M11 7c-5 0-7 7-3 10l11 6c5 0 7-7 3-10L11 7Z"/>)}</g></svg> : key.includes("amazon") ? <span className="aws-logo">aws<svg viewBox="0 0 40 12"><path d="M3 2c10 9 24 6 33 0m-5 0h6v5" fill="none" stroke="#ffb75e" strokeWidth="2"/></svg></span> : key.includes("canva") ? <span className="canva-c">C</span> : key.includes("youtube") ? <svg viewBox="0 0 32 32"><rect x="2" y="6" width="28" height="20" rx="6" fill="#ff4343"/><path d="m13 11 9 5-9 5" fill="white"/></svg> : <CreditCard size={22}/>}</span>;
+}
+
+function Toggle({ on, onClick, label, disabled = false }: { on: boolean; onClick: () => void; label: string; disabled?: boolean }) {
+  return <button type="button" role="switch" aria-checked={on} aria-label={label} className={`toggle ${on ? "on" : ""}`} onClick={onClick} disabled={disabled}><span/></button>;
+}
+
+function Avatar({ name, index = 0, small = false }: { name: string; index?: number; small?: boolean }) {
+  return <span className={`avatar avatar-${index % 4} ${small ? "small" : ""}`} title={name}>{name.split(" ").map(s => s[0]).slice(0, 2).join("")}</span>;
+}
+
+function EmptyState({ text }: { text: string }) { return <div className="empty-state"><Shield size={27}/><p>{text}</p></div>; }
+
+export default function RetrestApp({ initial, section = "shield" }: { initial: Dashboard; section?: WorkspaceSection }) {
+  const [data, setData] = useState(initial);
+  const tab = section;
+  const page = workspacePages[tab];
+  const router = useRouter();
+  const account = usePreviewAccount();
+  const profile = account?.profile ?? { name: data.user.name, email: data.user.email, phone: "" };
+  const navigateTo = (next: Tab) => router.push(workspacePages[next].href);
+  const [modal, setModal] = useState<Modal>(null);
+  const [currency, setCurrency] = useState<Currency>("NGN");
+  const [showCard, setShowCard] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [toast, setToast] = useState<{ text: string; error?: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const [merchant, setMerchant] = useState<Subscription | null>(null);
+  const [demoResult, setDemoResult] = useState<DemoResult | null>(null);
+  const [demoRunning, setDemoRunning] = useState<string | null>(null);
+  const [exportFormat, setExportFormat] = useState("csv");
+  const [vaultFilter, setVaultFilter] = useState("all");
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [poolLink, setPoolLink] = useState("");
+  const [poolSub, setPoolSub] = useState("");
+  const [poolMemberCount, setPoolMemberCount] = useState(3);
+  const [splitMode, setSplitMode] = useState("equal");
+  const [formError, setFormError] = useState("");
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const refresh = () => { if (!busyRef.current) api("/api/state").then(value => { if (!busyRef.current) setData(value); }).catch(() => {}); };
+    refresh();
+    const interval = setInterval(refresh, 3000);
+    return () => clearInterval(interval);
+  }, []);
+  useEffect(() => { setData(initial); }, [initial]);
+  useEffect(() => {
+    setModal(new URLSearchParams(window.location.search).get("simulator") === "1" ? "demo" : null);
+    setMerchant(null);
+  }, [section]);
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") { setModal(null); setMerchant(null); } };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+  useEffect(() => {
+    if (!modal && !merchant) return;
+    const previous = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = "hidden";
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+    const focusables = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled)') ?? []);
+    focusables()[0]?.focus();
+    const trap = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const elements = focusables();
+      const first = elements[0]; const last = elements[elements.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener("keydown", trap);
+    return () => { document.body.style.overflow = ""; document.removeEventListener("keydown", trap); previous?.focus(); };
+  }, [modal, merchant]);
+
+  const notify = (text: string, error = false) => {
+    setToast({ text, error });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 4500);
+  };
+  const open = (value: Modal) => { setFormError(""); setPoolLink(""); setModal(value); };
+  const mutate = async (url: string, method: string, body: unknown, message?: string) => {
+    if (busyRef.current) return null;
+    busyRef.current = true; setBusy(true); setFormError("");
+    try {
+      const value = await api(url, method, body);
+      setData(value.state ?? value);
+      if (message) notify(message);
+      return value;
+    } catch (error) { const text = error instanceof Error ? error.message : "Unable to save changes"; notify(text, true); setFormError(text); return null; }
+    finally { busyRef.current = false; setBusy(false); }
+  };
+  const toggleSubscription = async (sub: Subscription) => {
+    if (busyRef.current) return;
+    const status = sub.status === "ACTIVE" ? "PAUSED" : "ACTIVE";
+    setData(prev => ({ ...prev, subscriptions: prev.subscriptions.map(s => s.id === sub.id ? { ...s, status } : s) }));
+    const result = await mutate(`/api/subscriptions/${sub.id}`, "PATCH", { status }, status === "PAUSED" ? `${sub.merchant_name} kill switch activated. Future charges are blocked.` : `${sub.merchant_name} is active and protected.`);
+    if (!result) setData(prev => ({ ...prev, subscriptions: prev.subscriptions.map(s => s.id === sub.id ? { ...s, status: sub.status } : s) }));
+  };
+  const copy = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); notify("Copied to clipboard"); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    catch { notify("Clipboard unavailable. Select and copy the text manually.", true); }
+  };
+  const simulate = async (scenario: string) => {
+    if (busyRef.current) return;
+    setDemoRunning(scenario); setDemoResult(null);
+    const result = await mutate("/api/demo", "POST", { scenario });
+    if (result) { setDemoResult(result); notify(result.decision === "APPROVE" ? `${result.merchant_name} payment approved. Receipt ready.` : `${result.merchant_name}: ${result.reason}`); }
+    setDemoRunning(null);
+  };
+  const active = data.subscriptions.filter(s => s.status === "ACTIVE");
+  const paused = data.subscriptions.filter(s => s.status === "PAUSED");
+  const equivalent = (amount: number, from: Currency) => from === currency ? amount : currency === "NGN" ? amount * data.exchange_rate : amount / data.exchange_rate;
+  const totalBalance = equivalent(data.user.ngn_balance, "NGN") + equivalent(data.user.usd_balance, "USD");
+  const locked = active.filter(s => daysUntil(s.next_billing_date) <= 7).reduce((sum, s) => {
+    const pool = data.pools.find(p => p.subscription_id === s.id);
+    return sum + equivalent(Math.max(0, s.expected_amount - (pool?.pool_balance ?? 0)), s.currency);
+  }, 0);
+  const recurring = active.reduce((sum,s) => sum + equivalent(s.expected_amount, s.currency), 0);
+  const blocked = data.transactions.filter(t => t.status.startsWith("DECLINED"));
+  const shieldSavings = blocked.reduce((sum,t) => {
+    const sub = data.subscriptions.find(s => s.id === t.subscription_id);
+    return sum + equivalent(t.status === "DECLINED_PRICE_HIKE" ? Math.max(0, t.amount - (sub?.expected_amount ?? t.amount)) : t.amount, t.currency);
+  }, 0);
+  const visibleSubscriptions = data.subscriptions.filter(s => (filter === "all" || s.status.toLowerCase() === filter) && `${s.merchant_name} ${s.category}`.toLowerCase().includes(search.toLowerCase()));
+  const vaultTransactions = data.transactions.filter(t => t.is_business_expense && t.status === "APPROVED" && t.created_at.slice(0,7) === month && (vaultFilter === "all" || t.currency === vaultFilter));
+  const availablePoolSubs = data.subscriptions.filter(s => !data.pools.some(p => p.subscription_id === s.id));
+  const selectedPoolSub = availablePoolSubs.find(s => s.id === poolSub) ?? availablePoolSubs[0];
+  const unread = data.notifications.filter(n => !n.read_at);
+  const tabs: { id: Tab; label: string; icon: typeof Shield }[] = [{ id: "shield", label: "Shield", icon: Shield }, { id: "pools", label: "Pools", icon: Users }, { id: "insights", label: "Insights", icon: ChartNoAxesCombined }];
+
+  return <div className="app-shell">
+    <aside className="sidebar">
+      <Brand/>
+      <div className="workspace-label">YOUR WORKSPACE <span>PERSONAL</span></div>
+      <nav aria-label="Primary navigation">{tabs.map(({id,label,icon: Icon}) => <Link key={id} href={workspacePages[id].href} aria-label={label} aria-current={tab === id ? "page" : undefined} className={"nav-item " + (tab === id ? "selected" : "")}><Icon size={19}/><span>{label}</span>{id === "shield" && <span className="nav-count">{data.subscriptions.length}</span>}</Link>)}</nav>
+      <div className="sidebar-utilities" aria-label="Account and activity">
+        <Link href="/transactions" aria-label="Transactions" aria-current={tab === "transactions" ? "page" : undefined} className={"nav-item " + (tab === "transactions" ? "selected" : "")}><Activity size={18}/><span>Transactions</span></Link>
+        <Link href="/settings" aria-label="Account settings" aria-current={tab === "settings" ? "page" : undefined} className={"nav-item " + (tab === "settings" ? "selected" : "")}><Settings2 size={18}/><span>Account settings</span></Link>
+        <Link href="/support" aria-label="Chat with us" aria-current={tab === "support" ? "page" : undefined} className={"nav-item " + (tab === "support" ? "selected" : "")}><MessageCircle size={18}/><span>Chat with us</span><span className="status-dot"/></Link>
+      </div>
+      <div className="sidebar-note"><div className="orbit-art"><span/><span/><span/><ShieldCheck size={34}/><i className="orbit-star">✧</i></div><h3>Your rules.<br/>Always enforced.</h3><p>A separate shield for every merchant. One powerful card.</p><span className="mini-label"><span className="status-dot"/> MERCHANT RULES ONLINE</span></div>
+      <div className="sidebar-bottom"><button className="help-button" onClick={() => open("help")}><CircleHelp size={18}/> Help & how it works <ArrowUpRight size={15}/></button><Link href="/settings" className="profile-button" aria-label="Your profile"><Avatar name={profile.name}/><span><b>{profile.name}</b><small>{account ? "Account preview" : "Personal demo account"}</small></span><ChevronDown size={16}/></Link></div>
+    </aside>
+
+    <div className="workspace">
+      <header className="topbar">
+        <Link href="/" className="header-brand" aria-label="RETREST home"><Brand compact/><b>RETREST</b></Link>
+        <div className="breadcrumb">Workspace <ChevronRight size={13}/><span>{page.label}</span></div>
+        <div className="topbar-actions">
+          <span className="live-chip"><span className="status-dot"/>System operational</span>
+          <button className="currency-control" onClick={() => setCurrency(currency === "NGN" ? "USD" : "NGN")} aria-label="Switch display currency"><span className={"flag " + (currency === "USD" ? "us" : "")}/>{currency}<ChevronDown size={13}/></button>
+          <button className="button simulator-trigger" onClick={() => open("demo")}><Play size={13} fill="currentColor"/><span>Demo Simulator</span></button>
+          <button className="header-chat icon-button" aria-label="Chat with us" onClick={() => open("chat")}><MessageCircle size={18}/><span>Chat with us</span></button>
+          <button className="icon-button notification-button" aria-label="Notifications" onClick={() => open("notifications")}><Bell size={19}/>{unread.length > 0 && <i/>}</button>
+          <Link href={account ? "/settings" : "/login?next=%2Fshield"} className="topbar-profile" aria-label={account ? "Account settings" : "Log in"}><Avatar name={profile.name} small/></Link>
+        </div>
+      </header>
+      <main className="main-content">
+        <div className="page-heading"><div><div className="eyebrow"><span className="status-dot"/>{page.eyebrow}</div><h1>{page.heading}<span>.</span></h1><p>{page.description}</p></div><div className="heading-actions">{tab === "settings" || tab === "support" ? <Link href={tab === "settings" ? "/support" : "/transactions"} className="button secondary">{tab === "settings" ? <MessageCircle size={15}/> : <FileText size={15}/>} {tab === "settings" ? "Chat with us" : "View transactions"}<ArrowUpRight size={14}/></Link> : <><button className="button secondary" onClick={() => open("demo")}><Play size={14} fill="currentColor"/> Try a live demo</button><button className="button primary" onClick={() => open(tab === "pools" ? "create-pool" : "fund")}><Plus size={17}/>{tab === "pools" ? "Create a pool" : "Fund wallet"}</button></>}</div></div>
+
+        {tab === "shield" && <>
+          <div className="overview-grid">
+            <section className="master-card"><div className="card-top"><div className="card-brand">retrest<span>↗</span></div><span className={"card-active " + (data.card.card_status === "FROZEN" ? "frozen" : "")}><span/>{data.card.card_status}</span></div><div className="card-middle"><div className="card-chip"><span/><span/><span/></div><span className="contactless">)))</span><div className="card-contours"><i/><i/><i/><i/><i/></div></div><div className="card-number"><span>{showCard ? "4242  4242  4242  4289" : "••••  ••••  ••••  4289"}</span><button aria-label={showCard ? "Hide card details" : "Reveal demo card details"} onClick={() => setShowCard(!showCard)}>{showCard ? <EyeOff size={17}/> : <Eye size={17}/>}</button><button aria-label="Copy demo card number" onClick={() => copy("4242424242424289")}>{copied ? <Check size={16}/> : <Copy size={15}/>}</button></div><div className="card-bottom"><div><small>CARDHOLDER</small><span>{profile.name.toUpperCase()}</span></div><div><small>{showCard ? "EXPIRY / DEMO CVV" : "VALID THRU"}</small><span>{showCard ? "08/29 · 123" : "08/29"}</span></div><div className="mastercard-logo"><i/><i/></div></div><div className="card-demo-label"><span>VIRTUAL DEBIT · DEMO CARD</span><button onClick={() => open("demo")}><Zap size={12}/> Simulate incoming charge <ArrowUpRight size={12}/></button></div></section>
+            <section className="panel safe-spend"><div className="panel-top"><span>Safe to spend <span className="badge green compact-badge">AVAILABLE</span></span><span className="icon-well"><Wallet size={17}/></span></div><div className="safe-amount">{money(Math.max(0, totalBalance - locked), currency)}<span>{currency}</span></div><p>After upcoming bills. Ready for what’s next.</p><div className="balance-bar"><span style={{width: `${Math.min(100, Math.max(4, (totalBalance - locked) / Math.max(1,totalBalance) * 100))}%`}}/><i/></div><div className="balance-details"><span><i className="legend-dot lime"/>Total wallet<b>{money(totalBalance,currency)}</b></span><span><i className="legend-dot muted"/>Locked · next 7 days<b>{money(locked,currency)}</b></span></div><div className="wallet-currencies"><span><span className="flag"/>NGN <b>{money(data.user.ngn_balance)}</b></span><span><CircleDollarSign size={13}/>USD <b>{money(data.user.usd_balance,"USD",true)}</b></span></div></section>
+            <section className="panel shield-summary"><div className="panel-top"><span>Your shield is on</span><ShieldCheck size={18} className="lime-text"/></div><div className="shield-summary-number">{active.length}<span>/{data.subscriptions.length}</span></div><p>subscriptions actively protected</p><div className="shield-divider"/><div className="saved-label"><span className="tiny-icon"><ArrowDownLeft size={15}/></span>Kept in your pocket</div><strong>{money(shieldSavings,currency)}</strong><span className="summary-note">from {blocked.length} blocked attempts</span><button className="text-button" onClick={() => navigateTo("insights")}>Meet your insights <ArrowUpRight size={15}/></button></section>
+          </div>
+          <div className="section-grid">
+            <section className="panel subscriptions-panel"><div className="section-header"><div><h2>Connected subscriptions <span className="count-badge">{data.subscriptions.length}</span></h2><p>A separate set of rules. One powerful card.</p></div><button className="text-button" onClick={() => open("add")}><Plus size={15}/> Add subscription</button></div><div className="table-toolbar"><div className="segmented">{["all","active","paused"].map(f => <button key={f} className={filter === f ? "selected" : ""} onClick={() => setFilter(f)}>{f === "all" ? "All subscriptions" : f.charAt(0).toUpperCase()+f.slice(1)}{f === "paused" && <span>{paused.length}</span>}</button>)}</div><div className="table-tools"><div className="search-field"><Search size={15}/><input aria-label="Search subscriptions" placeholder="Find a subscription" value={search} onChange={e => setSearch(e.target.value)}/></div><button className="icon-button" aria-label="Show active subscriptions" onClick={() => setFilter(filter === "active" ? "all" : "active")}><SlidersHorizontal size={16}/></button></div></div><div className="table-scroll"><table className="subscription-table"><thead><tr><th>SUBSCRIPTION</th><th>NEXT PAYMENT</th><th>AMOUNT</th><th>SHIELD</th><th/></tr></thead><tbody>{visibleSubscriptions.map(sub => <tr key={sub.id} className={sub.status === "PAUSED" ? "paused-row" : ""}><td><button className="merchant-cell" onClick={() => { setMerchant(sub); setFormError(""); }}><MerchantLogo name={sub.merchant_name}/><span><b>{sub.merchant_name}{data.pools.some(p => p.subscription_id === sub.id) && <Users size={12} className="pool-indicator"/>}</b><small>{sub.plan_name}</small></span></button></td><td><span className="renewal-date">{shortDate(sub.next_billing_date)}</span><small className={`renewal-count ${daysUntil(sub.next_billing_date) <= 3 ? "soon" : ""}`}>{sub.status === "PAUSED" ? "Payment blocked" : `in ${daysUntil(sub.next_billing_date)} days`}</small></td><td><b className="table-amount">{money(sub.expected_amount,sub.currency)}</b><small className="amount-cycle">/ month</small></td><td><div className="shield-cell"><Toggle on={sub.status === "ACTIVE"} disabled={busy} onClick={() => toggleSubscription(sub)} label={`${sub.status === "ACTIVE" ? "Pause" : "Activate"} ${sub.merchant_name}`}/><span className={sub.status === "ACTIVE" ? "lime-text" : "muted-text"}>{sub.status === "ACTIVE" ? "Active" : "Paused"}</span></div></td><td><button className="icon-button row-details" aria-label={`Manage ${sub.merchant_name}`} onClick={() => {setMerchant(sub);setFormError("");}}><ChevronRight size={16}/></button></td></tr>)}</tbody></table>{!visibleSubscriptions.length && <EmptyState text="No subscriptions match your search."/>}</div><div className="table-footer"><ShieldCheck size={14}/><span>Price-hike protection is active on every connected subscription.</span><LockKeyhole size={13}/></div></section>
+            <section className="panel activity-panel"><div className="section-header"><h2>Live activity <span className="feed-live"><span className="status-dot"/>LIVE</span></h2><Link href="/transactions" className="text-button">View all <ArrowUpRight size={13}/></Link></div><div className="activity-feed">{data.transactions.slice(0,5).map(t => <div className="activity-item" key={t.id}><span className={`activity-icon ${t.status === "APPROVED" ? "approved" : t.status === "DECLINED_PRICE_HIKE" ? "hike" : "blocked"}`}>{t.status === "APPROVED" ? <Check size={16}/> : t.status === "DECLINED_PRICE_HIKE" ? <TriangleAlert size={15}/> : <ShieldOff size={15}/>}</span><div><div className="activity-title">{t.status === "APPROVED" ? "Payment approved" : t.status === "DECLINED_PRICE_HIKE" ? "Price hike blocked" : t.status === "DECLINED_KILL_SWITCH" ? "Kill switch blocked" : "Payment blocked"}</div><p>{t.merchant_name} <span>·</span> {money(t.amount,t.currency)}</p><span className={`decision-code ${t.status === "APPROVED" ? "approved" : "declined"}`}>{t.status === "APPROVED" ? "APPROVED" : t.status}</span><div className="activity-meta"><small>{relativeTime(t.created_at)}</small>{t.receipt_url && <a href={t.receipt_url} target="_blank" rel="noreferrer">Receipt <ArrowUpRight size={11}/></a>}</div>{t.fx_ngn_amount > 0 && <small className="fx-activity">{money(t.fx_ngn_amount)} auto-converted</small>}</div></div>)}</div><div className="activity-footer"><span className="pulse-line"><Activity size={15}/></span><p>Authorization engine online<span>Listening for incoming charges</span></p></div></section>
+          </div>
+          <div className="bottom-insight"><span className="insight-symbol"><Sparkles size={17}/></span><p>A little heads-up: <b>{paused.length ? `${paused[0].merchant_name} is paused.` : "Your shield is up."}</b> {paused.length ? "We’ll block every charge until you say otherwise." : "Every merchant is following your rules."}</p><button onClick={() => navigateTo("insights")}>See your insights <ArrowRight size={15}/></button></div>
+        </>}
+
+        {tab === "pools" && <>
+          <div className="pool-summary-strip"><div><span className="icon-well"><Users size={20}/></span><span><small>YOUR SHARED PLANS</small><strong>{data.pools.length} active shared plans</strong></span></div><div><small>TOTAL CONTRIBUTIONS</small><strong>{money(data.pools.reduce((sum,p) => sum+equivalent(p.pool_balance,p.currency),0),currency)}</strong></div><div><small>WAITING ON A FRIEND</small><strong>{data.pools.reduce((sum,p) => sum+p.members.filter(m => m.payment_status !== "PAID").length,0)} contribution{data.pools.reduce((sum,p) => sum+p.members.filter(m => m.payment_status !== "PAID").length,0) === 1 ? "" : "s"}</strong></div><span className="badge green"><ShieldCheck size={12}/> Shield protected</span></div>
+          <div className="pool-grid">{data.pools.map(pool => <section className="panel pool-card" key={pool.id}><div className="pool-card-header"><MerchantLogo name={pool.merchant_name}/><div><h2>{pool.name}</h2><p>Hosted by {pool.members.find(m => m.user_id === pool.host_user_id)?.name ?? data.user.name} · {pool.members.length} members</p></div><span className={`badge ${pool.pool_balance >= pool.target_amount ? "green" : "amber"}`}>{pool.pool_balance >= pool.target_amount ? "Fully funded" : pool.status === "PAID" ? "Renewal paid" : "Collecting"}</span></div><div className="pool-amount"><strong>{money(pool.pool_balance,pool.currency)}</strong><span>of {money(pool.target_amount,pool.currency)}</span><small>{Math.min(100,Math.round(pool.pool_balance/pool.target_amount*100))}% funded</small></div><div className="pool-progress"><span style={{width:`${Math.min(100,pool.pool_balance/pool.target_amount*100)}%`}}/></div><div className="pool-renewal"><span><RefreshCw size={12}/> Renews {shortDate(pool.next_billing_date)}</span><span>{daysUntil(pool.next_billing_date)} days to go</span></div><div className="pool-members">{pool.members.map((m,i) => <div className="pool-member" key={m.id}><Avatar name={m.name} index={i}/><div><b>{m.name}{m.user_id === data.user.id && <small> (you)</small>}</b><span>{money(m.share_amount,pool.currency)} share</span></div>{m.payment_status === "PAID" ? <span className="member-paid"><CheckCheck size={14}/> Paid</span> : <button className={`member-status ${m.auto_debit_scheduled ? "scheduled" : ""}`} disabled={busy} title="Simulate this member’s contribution in demo mode" onClick={() => mutate(`/api/pools/${pool.id}`,"PATCH",{member_id:m.id},`${m.name.split(" ")[0]}’s contribution received (demo).`)}>{m.auto_debit_scheduled ? <><Zap size={12}/> Auto-debit scheduled</> : <><Plus size={12}/> {m.user_id === data.user.id ? "Pay my share" : "Pending · simulate"}</>}</button>}</div>)}</div><div className="pool-fallback"><div><Shield size={15}/><span>Host wallet fallback<small>Cover any shortfall at renewal</small></span></div><Toggle on={!!pool.fallback_enabled} disabled={busy} onClick={() => mutate(`/api/pools/${pool.id}`,"PATCH",{fallback_enabled:!pool.fallback_enabled},"Pool fallback updated")} label={`Toggle fallback for ${pool.name}`}/></div><button className="button secondary pool-invite" onClick={() => copy(`${location.origin}/invite/${pool.invite_token}`)}><LinkIcon size={15}/> Copy invite link <ArrowUpRight size={14}/></button></section>)}<button className="new-pool-card" onClick={() => open("create-pool")}><span><Plus size={26}/></span><h3>Better together.</h3><p>Netflix night? A creative side hustle?<br/>There’s a pool for that.</p><b>Create a new pool <ArrowRight size={16}/></b><div className="avatar-stack"><Avatar name="Ada Okafor" index={0}/><Avatar name="Tobi Adebayo" index={1}/><Avatar name="Chioma Eze" index={2}/><span>+ you</span></div></button></div><div className="bottom-insight"><ShieldCheck size={18}/><p>Your master card stays the same. <b>Pool funds are used first, your wallet only fills the gap.</b></p></div>
+        </>}
+
+        {tab === "insights" && <>
+          <div className="fx-fees-note"><Globe size={16}/><span><b>{money(Math.round(data.user.fx_converted_ngn * 0.015))}</b> in FX fees avoided with zero-markup conversion.</span><small>Compared with a simulated 1.5% FX fee</small></div>
+          <div className="insights-grid"><section className="panel fx-panel"><div className="section-header"><div><h2><Globe size={19}/> FX auto-conversion</h2><p>NGN → USD. Exactly when you need it.</p></div><span className="badge green">SMART TREASURY</span></div><div className="fx-rate"><span className="fx-currency"><CircleDollarSign size={22}/><b>1 USD</b></span><ArrowRight size={20}/><span className="fx-currency"><span className="flag"/><b>{money(data.exchange_rate*100)}</b></span><span className="rate-label"><span className="status-dot"/>SIMULATED LIVE RATE</span></div><div className="fx-setting"><span className="icon-well"><Zap size={19}/></span><div><b>Just-in-time auto-conversion</b><p>Short on dollars? Convert only what you need from NGN,<br className="desktop-br"/> right when your subscription charges.</p></div><Toggle on={!!data.user.auto_fx_enabled} disabled={busy} onClick={() => mutate("/api/settings","PATCH",{auto_fx_enabled:!data.user.auto_fx_enabled},"Auto-conversion preference saved")} label="Automatic NGN to USD conversion"/></div><div className="fx-bottom"><span><ShieldCheck size={15}/> No pre-funding. No idle dollars.</span><span>0% demo FX markup</span></div></section><section className="panel insight-savings"><span className="icon-well"><Sparkles size={20}/></span><small>YOUR SHIELD AT WORK</small><strong>{money(shieldSavings,currency)}</strong><p>in attempted overcharges<br/>and paused payments blocked.</p><div><span>{blocked.length} blocks</span><span>{money(data.user.fx_converted_ngn)} converted</span></div></section></div>
+          <div className="treasury-tools"><section className="panel monthly-brief-card"><span className="brief-orb"><Sparkles size={25}/></span><div className="eyebrow">YOUR MONTHLY MONEY BRIEF</div><h2>Less guesswork.<br/>More clarity.</h2><p>NGN and USD spend, your top categories, and the charges your shield stopped. All in one monthly summary.</p><div className="brief-tags"><span><CheckCircle2 size={13}/> Actual payment activity</span><span><MessageCircle size={13}/> Email-ready</span></div><button className="button primary" onClick={() => open("summary")}><Sparkles size={15}/> Generate spend summary <ArrowUpRight size={15}/></button><small>AI summary preview · generated from demo transactions</small></section><section className="panel zombie-panel"><div className="section-header"><div><h2><EyeOff size={18}/> Zombie subscriptions</h2><p>Unused plans deserve a second look.</p></div><span className="badge amber">SUBSCRIPTION CHECK-IN</span></div>{data.subscriptions.filter(s => s.needs_review || s.id === "aws" || s.id === "youtube").map(s => <div className="zombie-row" key={s.id}><MerchantLogo name={s.merchant_name}/><div><b>{s.merchant_name}</b><p>{s.id === "youtube" ? "Flagged for review · You haven’t used this in a while" : "Review your usage · Is this still earning its place?"}</p></div><span>{money(s.expected_amount,s.currency)}<small>/month</small></span><button className={`button ${s.status === "PAUSED" ? "subtle" : "secondary"}`} disabled={s.status === "PAUSED" || busy} onClick={() => toggleSubscription(s)}>{s.status === "PAUSED" ? <><ShieldCheck size={15}/> Kill switch active</> : <><Pause size={15}/> Activate kill switch</>}</button></div>)}</section></div>
+          <section className="panel vault-panel"><div className="section-header"><div><h2><BriefcaseBusiness size={19}/> Business expense vault</h2><p>Every work expense. Every receipt. Already in one place.</p></div><div className="export-controls"><select aria-label="Export receipt format" value={exportFormat} onChange={e => setExportFormat(e.target.value)}><option value="csv">CSV</option><option value="pdf">PDF</option></select><a className="button primary" href={`/api/export?format=${exportFormat}&month=${month}`}><Download size={15}/> Export receipt pack</a></div></div><div className="vault-toolbar"><div className="segmented">{["all","NGN","USD"].map(f => <button key={f} className={vaultFilter === f ? "selected" : ""} onClick={() => setVaultFilter(f)}>{f === "all" ? "All expenses" : f}</button>)}</div><label><input type="month" aria-label="Receipt month" value={month} onChange={e => setMonth(e.target.value)}/></label></div><div className="table-scroll"><table className="vault-table"><thead><tr><th>MERCHANT</th><th>DATE</th><th>AMOUNT</th><th>CATEGORY</th><th>RECEIPT</th></tr></thead><tbody>{vaultTransactions.map(t => <tr key={t.id}><td><div className="merchant-cell"><MerchantLogo name={t.merchant_name} small/><b>{t.merchant_name}</b></div></td><td>{shortDate(t.created_at)}</td><td><b>{money(t.amount,t.currency)}</b></td><td><span className="badge neutral"><BriefcaseBusiness size={11}/> Business expense</span></td><td><a href={t.receipt_url ?? "#"} target="_blank" rel="noreferrer" className="receipt-link"><FileText size={14}/> View <ArrowUpRight size={12}/></a></td></tr>)}</tbody></table>{!vaultTransactions.length && <EmptyState text="No settled business expenses for this month and currency."/>}</div><div className="table-footer"><LockKeyhole size={13}/>{vaultTransactions.length} verified receipts · Ready for your accountant</div></section>
+        </>}
+        {tab === "transactions" && <TransactionHistory user={data.user} transactions={data.transactions}/>}
+        {tab === "settings" && <AccountSettings user={data.user} busy={busy} notify={notify} onAutoFx={() => mutate("/api/settings","PATCH",{auto_fx_enabled:!data.user.auto_fx_enabled},"Auto-conversion preference saved")}/>}
+        {tab === "support" && <SupportChat name={profile.name}/>}
+        <footer className="page-footer"><span><Brand compact/> A little more financial peace.</span><span><LockKeyhole size={12}/> Your rules, enforced in real time <span className="footer-dot">·</span> Buildathon demo</span></footer>
+      </main>
+    </div>
+
+    <nav className="bottom-nav" aria-label="Dashboard navigation">
+      {tabs.map(({id,label,icon: Icon}) => <Link key={id} href={workspacePages[id].href} aria-label={label} aria-current={tab === id ? "page" : undefined} className={"bottom-nav-item " + (tab === id ? "selected" : "")}><Icon size={20}/><span>{label}</span>{id === "pools" && <i className="bottom-count" aria-hidden="true">{data.pools.length}</i>}</Link>)}
+      <span className="nav-separator"/>
+      <button className="bottom-live" onClick={() => open("demo")} aria-label="Open simulator"><span className="status-dot"/><span>Shield active</span><Zap size={15}/></button>
+    </nav>
+
+    {toast && <div className={`toast ${toast.error ? "error" : ""}`} role="status">{toast.error ? <TriangleAlert size={18}/> : <CheckCircle2 size={18}/>}<span>{toast.text}</span><button aria-label="Dismiss notification" onClick={() => setToast(null)}><X size={15}/></button></div>}
+
+    {(modal || merchant) && <div className={`modal-backdrop ${(modal === "demo" || modal === "chat" || modal === "summary") ? "drawer-backdrop" : ""}`} onClick={() => {if (!busy) {setModal(null);setMerchant(null);}}}><section className={`modal ${modal === "demo" ? "demo-drawer" : modal === "chat" ? "support-drawer" : modal === "summary" ? "summary-drawer" : ""}`} role="dialog" aria-modal="true" aria-label={merchant ? `${merchant.merchant_name} settings` : modal === "demo" ? "Live charge simulator" : modal === "chat" ? "Chat with us" : modal === "summary" ? "Monthly spend summary" : "RETREST controls"} onClick={e => e.stopPropagation()}><button className="modal-close icon-button" aria-label="Close dialog" onClick={() => {setModal(null);setMerchant(null);}}><X size={20}/></button>
+      {modal === "demo" && <><span className="modal-kicker"><Zap size={14}/> BUILDATHON · LIVE AUTHORIZATION</span><h2>Your shield.<br/>Put to the test<span>.</span></h2><p className="modal-description">Send a simulated issuer webhook. See the decision, funding, and receipt from the live authorization engine.</p><div className="demo-card-mini"><CreditCard size={22}/><div><b>One master card</b><span>•••• 4289 · {profile.name}</span></div><span className="badge green">Live engine</span></div><div className="demo-scenarios">{[{id:"normal",icon:CheckCircle2,title:"The everyday payment",description:"Spotify · ₦1,300 · Within your limit",tag:"APPROVE",class:"approved"},{id:"paused",icon:ShieldOff,title:"The kill switch",description:"YouTube · ₦1,900 · Merchant paused",tag:"BLOCK",class:"blocked"},{id:"hike",icon:TriangleAlert,title:"The sneaky price hike",description:"Spotify · ₦1,560 · 20% above your limit",tag:"BLOCK",class:"hike"},{id:"fx",icon:Globe,title:"The dollar subscription",description:"ChatGPT · $20 · Just-in-time FX",tag:"AUTO-FX",class:"fx"},{id:"pool",icon:Users,title:"The shared plan",description:"Netflix · ₦7,000 · Pool funds first",tag:"SPLIT",class:"pool"}].map(s => <button className="demo-scenario" key={s.id} disabled={busy} onClick={() => simulate(s.id)}><span className={`scenario-icon ${s.class}`}><s.icon size={20}/></span><span><b>{s.title}</b><small>{s.description}</small></span><span className="scenario-tag">{demoRunning === s.id ? <LoaderCircle size={15} className="spin"/> : s.tag}</span><ChevronRight size={15}/></button>)}</div>{demoResult ? <div className={`demo-result ${demoResult.decision === "APPROVE" ? "approved" : "declined"}`} role="status"><div><span>{demoResult.decision === "APPROVE" ? <CheckCircle2 size={24}/> : <ShieldOff size={24}/>}</span><b>{demoResult.decision === "APPROVE" ? "Payment approved." : "Your money stayed put."}</b></div><p>{demoResult.reason}</p><dl><dt>Merchant</dt><dd>{demoResult.merchant_name}</dd><dt>Attempted amount</dt><dd>{money(demoResult.amount,demoResult.currency)}</dd><dt>Authorization status</dt><dd><span className={`decision-code ${demoResult.decision === "APPROVE" ? "approved" : "declined"}`}>{data.transactions.find(t => t.id === demoResult.transaction_id)?.status ?? demoResult.decision}</span></dd><dt>Decision time</dt><dd>{demoResult.duration_ms} ms <span className="lime-text">· HTTP {demoResult.http_status}</span></dd>{demoResult.fx_ngn_amount > 0 && <><dt>NGN auto-converted</dt><dd>{money(demoResult.fx_ngn_amount)}</dd></>}{demoResult.pool_amount > 0 && <><dt>Paid from pool</dt><dd>{money(demoResult.pool_amount,demoResult.currency)}</dd></>}</dl>{demoResult.decision === "APPROVE" && <div className="renewal-confirmation"><RefreshCw size={14}/><span>Renewal advanced by 30 days · {shortDate(data.subscriptions.find(s => s.merchant_name === demoResult.merchant_name)?.next_billing_date ?? new Date().toISOString())}</span></div>}{demoResult.receipt_url && <a className="button primary" href={demoResult.receipt_url} target="_blank" rel="noreferrer"><FileText size={15}/> Your receipt is ready <ArrowUpRight size={14}/></a>}</div> : <div className="demo-waiting"><Activity size={22}/><span>Your shield is listening.<small>Choose a scenario to send a charge.</small></span></div>}<div className="demo-disclaimer"><LockKeyhole size={13}/><span>These are simulated charges using the real authorization engine. Demo wallet balances update and persist.</span></div></>}
+
+      {modal === "chat" && <SupportChat name={profile.name}/>}
+      {modal === "summary" && <SpendSummary data={data} email={profile.email} notify={notify}/>}
+      {modal === "fund" && <><span className="modal-kicker"><Wallet size={16}/> TOP UP & TAKE A BREATH</span><h2>A little more<br/>in your wallet<span>.</span></h2><p className="modal-description">Add demo funds to your NGN or USD wallet.</p><form onSubmit={async e => {e.preventDefault();const f=new FormData(e.currentTarget);const value=await mutate("/api/wallet","POST",{currency:f.get("currency"),amount:Math.round(Number(f.get("amount"))*100)},"Demo wallet funded. You’re good to go.");if(value)setModal(null);}}><label>Currency<select name="currency" defaultValue="NGN"><option value="NGN">NGN — Nigerian naira</option><option value="USD">USD — US dollar</option></select></label><label>Amount<input name="amount" type="number" min="0.01" max="1000000" step="0.01" defaultValue="25000" required/></label><div className="form-callout"><ShieldCheck size={17}/><span>Demo funding is instant. Real bank transfers require a connected payment provider.</span></div>{formError && <p className="form-error">{formError}</p>}<button className="button primary full-width" disabled={busy}>{busy ? <LoaderCircle size={16} className="spin"/> : <Plus size={16}/>} Add funds</button></form></>}
+
+      {modal === "add" && <><span className="modal-kicker"><Shield size={16}/> BRING A BILL UNDER YOUR SHIELD</span><h2>New subscription.<br/>Your rules<span>.</span></h2><p className="modal-description">Set the merchant’s limit, then use your master card at checkout.</p><form onSubmit={async e => {e.preventDefault();const f=new FormData(e.currentTarget);const value=await mutate("/api/subscriptions","POST",{merchant_name:f.get("merchant_name"),merchant_descriptor:String(f.get("merchant_descriptor")).toUpperCase().trim(),expected_amount:Math.round(Number(f.get("amount"))*100),currency:f.get("currency"),next_billing_date:f.get("date"),is_business_expense:f.get("business")==="on"},"Subscription connected and price shield activated.");if(value)setModal(null);}}><div className="form-two"><label>Merchant name<input name="merchant_name" placeholder="e.g. Apple Music" maxLength={60} required/></label><label>Card statement descriptor<input name="merchant_descriptor" placeholder="e.g. APPLE MUSIC" maxLength={60} required/></label></div><div className="form-two"><label>Maximum monthly charge<input name="amount" type="number" min="0.01" max="1000000" step="0.01" placeholder="2,000" required/></label><label>Currency<select name="currency"><option value="NGN">NGN</option><option value="USD">USD</option></select></label></div><label>Next renewal<input name="date" type="date" defaultValue={new Date(Date.now()+7*86400000).toISOString().slice(0,10)} required/></label><label className="checkbox-label"><input type="checkbox" name="business"/> This is a business expense</label>{formError && <p className="form-error">{formError}</p>}<button className="button primary full-width" disabled={busy}><ShieldCheck size={16}/> Connect & protect</button></form></>}
+
+      {modal === "create-pool" && <><span className="modal-kicker"><Users size={16}/> MAKE IT A GROUP THING</span><h2>Same subscription.<br/>Smaller share<span>.</span></h2>{poolLink ? <div className="pool-created"><span className="success-circle"><Check size={30}/></span><h3>Your pool is ready.</h3><p>Share this link with your people. Contributions are collected before the next renewal.</p><div className="invite-link-text">{poolLink}</div><button className="button primary full-width" onClick={() => copy(poolLink)}><Copy size={15}/> Copy invite link</button><button className="text-button" onClick={() => {setModal(null);navigateTo("pools");}}>See your pool <ArrowRight size={15}/></button></div> : !availablePoolSubs.length ? <EmptyState text="All your subscriptions already have pools. Add a subscription to create another."/> : <form onSubmit={async e => {e.preventDefault();if(!selectedPoolSub)return;const f=new FormData(e.currentTarget);const base=Math.floor(selectedPoolSub.expected_amount/poolMemberCount);const members=Array.from({length:poolMemberCount},(_,i)=>({name:i===0?data.user.name:String(f.get(`name_${i}`)),email:i===0?data.user.email:String(f.get(`email_${i}`)),share_amount:splitMode==="equal"?base+(i===0?selectedPoolSub.expected_amount-base*poolMemberCount:0):Math.round(Number(f.get(`share_${i}`))*100)}));const value=await mutate("/api/pools","POST",{subscription_id:selectedPoolSub.id,name:f.get("pool_name"),members,fallback_enabled:f.get("fallback")==="on"},"Your pool is ready to share.");if(value)setPoolLink(`${location.origin}/invite/${value.invite_token}`);}}><label>Choose a subscription<select value={selectedPoolSub?.id ?? ""} onChange={e=>setPoolSub(e.target.value)}>{availablePoolSubs.map(s=><option key={s.id} value={s.id}>{s.merchant_name} · {money(s.expected_amount,s.currency)}/month</option>)}</select></label><label>Give your pool a name<input name="pool_name" placeholder="e.g. The listening lounge" maxLength={60} required/></label><div className="form-two"><label>Members, including you<select value={poolMemberCount} onChange={e=>setPoolMemberCount(Number(e.target.value))}>{[2,3,4,5,6].map(n=><option key={n} value={n}>{n} members</option>)}</select></label><label>How to split<select value={splitMode} onChange={e=>setSplitMode(e.target.value)}><option value="equal">Equal shares</option><option value="custom">Custom shares</option></select></label></div><div className="split-preview">{splitMode==="equal"?<><Users size={16}/><span>About <b>{money(Math.floor((selectedPoolSub?.expected_amount??0)/poolMemberCount),selectedPoolSub?.currency)}</b> each, per month</span></>:<><Settings2 size={16}/><span>Custom shares must total <b>{money(selectedPoolSub?.expected_amount??0,selectedPoolSub?.currency)}</b></span></>}</div><div className="pool-form-members">{Array.from({length:poolMemberCount},(_,i)=><div className="pool-form-member" key={i}><span>{i+1}</span>{i===0?<b>{data.user.name} (you)</b>:<><input name={`name_${i}`} aria-label={`Member ${i+1} name`} placeholder="Friend’s name" required/><input type="email" name={`email_${i}`} aria-label={`Member ${i+1} email`} placeholder="Email address" required/></>}{splitMode==="custom"&&<input type="number" min="0.01" step="0.01" name={`share_${i}`} aria-label={`Member ${i+1} share`} placeholder="Share" required/>}</div>)}</div><label className="checkbox-label"><input type="checkbox" name="fallback" defaultChecked/> Cover shortfalls from my wallet at renewal</label>{formError&&<p className="form-error">{formError}</p>}<button className="button primary full-width" disabled={busy}><Plus size={16}/> Create pool & get invite link</button></form>}</>}
+
+      {modal === "notifications" && <><span className="modal-kicker"><Bell size={16}/> YOUR SHIELD HAS AN UPDATE</span><h2>Always in the loop<span>.</span></h2><p className="modal-description">Approve new limits only when a price increase works for you.</p>{!unread.length?<EmptyState text="All quiet here. Your shield is keeping watch."/>:<div className="notification-list">{unread.map(n=>{const t=data.transactions.find(t=>t.id===n.transaction_id);return <div className="notification-card" key={n.id}><TriangleAlert size={19}/><div><b>{n.title}</b><p>{n.message}</p>{t&&<button className="button secondary" disabled={busy} onClick={()=>mutate(`/api/subscriptions/${n.subscription_id}`,"PATCH",{expected_max_amount:t.amount},"New maximum approved. The merchant can retry its payment.")}>Approve new limit · {money(t.amount,t.currency)}</button>}</div></div>;})}</div>}</>}
+
+      {modal === "help" && <><span className="modal-kicker"><ShieldCheck size={16}/> MEET YOUR FINANCIAL SIDEKICK</span><h2>Your money.<br/>Your rules<span>.</span></h2><p className="modal-description">RETREST gives every recurring payment its own set of permissions, all on one master virtual card.</p><div className="how-it-works">{[{icon:CreditCard,title:"One card for every subscription",text:"Connect a merchant, set a monthly maximum, and use the master card at checkout."},{icon:ShieldOff,title:"Pause a merchant in one tap",text:"The kill switch blocks that merchant immediately. Your other payments keep working."},{icon:Globe,title:"Dollars only when you need them",text:"Auto-FX converts the exact USD shortfall from your NGN wallet at the simulated rate."},{icon:Users,title:"Share a plan, share the cost",text:"Pool contributions fund the bill first. You choose whether your wallet covers the gap."}].map(s=><div key={s.title}><s.icon size={21}/><span><b>{s.title}</b><p>{s.text}</p></span></div>)}</div><div className="form-callout"><Zap size={17}/><span>This buildathon MVP uses a persistent demo wallet and simulated issuer charges. No real card is issued or charged.</span></div><button className="button primary full-width" onClick={()=>open("demo")}>See it in action <ArrowRight size={16}/></button></>}
+
+      {merchant && <><div className="merchant-modal-top"><MerchantLogo name={merchant.merchant_name}/><span className={`badge ${merchant.status === "ACTIVE" ? "green" : "neutral"}`}>{merchant.status === "ACTIVE" ? "Protected" : "Kill switch active"}</span></div><h2>{merchant.merchant_name}<span>.</span></h2><p className="modal-description">{merchant.plan_name} · {merchant.merchant_descriptor}</p><form onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const value=await mutate(`/api/subscriptions/${merchant.id}`,"PATCH",{expected_max_amount:Math.round(Number(f.get("maximum"))*100)},"Merchant limit saved. Your price shield is updated.");if(value)setMerchant(null);}}><div className="merchant-info"><span>Next renewal<b>{shortDate(merchant.next_billing_date)}</b></span><span>Expected charge<b>{money(merchant.expected_amount,merchant.currency)}</b></span></div><label>Maximum allowed charge ({merchant.currency})<input type="number" name="maximum" step="0.01" min={merchant.expected_amount/100} defaultValue={merchant.expected_max_amount/100} required/></label><div className="form-callout"><ShieldCheck size={17}/><span>Any charge above this amount is declined before money leaves your wallet.</span></div>{formError&&<p className="form-error">{formError}</p>}<button className="button primary full-width" disabled={busy}>Save merchant rule <Check size={16}/></button></form><button className="button secondary full-width" onClick={() => {setPoolSub(merchant.id);setMerchant(null);open("create-pool");}} disabled={data.pools.some(p => p.subscription_id === merchant.id)}><Users size={15}/>{data.pools.some(p => p.subscription_id === merchant.id) ? "Shared pool connected" : "Split this subscription"}</button><button className="button secondary full-width merchant-pause" disabled={busy} onClick={async()=>{await toggleSubscription(data.subscriptions.find(s=>s.id===merchant.id)??merchant);setMerchant(null);}}>{merchant.status === "ACTIVE" ? <><Pause size={15}/> Activate kill switch</> : <><Play size={15}/> Resume subscription</>}</button></>}
+      {modal === "demo" && <button className="demo-reset text-button" disabled={busy} onClick={async () => { const value = await mutate("/api/demo/reset", "POST", {}, "Demo reset. All wallets, pools, and merchant rules restored."); if (value) setDemoResult(null); }}><RefreshCw size={13}/> Reset demo to starting balances</button>}
+    </section></div>}
+  </div>;
+}

@@ -1,30 +1,51 @@
 {
-  "name": "retrest",
-  "version": "1.0.0",
+  "name": "retrest-monorepo",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "next dev --hostname 0.0.0.0",
-    "build": "tsc --noEmit && next build",
-    "start": "next start --hostname 0.0.0.0",
-    "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "test:http": "node tests/http-smoke.mjs",
-    "test:ui": "playwright test"
+  "workspaces": [
+    "frontend",
+    "backend",
+    "landing-page",
+    "design-tokens"
+  ],
+  "engines": {
+    "node": ">=22.18.0",
+    "npm": ">=10"
   },
-  "dependencies": {
-    "lucide-react": "^0.468.0",
-    "next": "^16.0.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+  "scripts": {
+    "dev": "npm run tokens:build && concurrently -k -n api,app,landing,tokens \"npm run dev -w backend\" \"npm run dev -w frontend\" \"npm run dev -w landing-page\" \"npm run tokens:watch\"",
+    "dev:frontend": "npm run tokens:build && npm run dev -w frontend",
+    "dev:backend": "npm run dev -w backend",
+    "dev:landing": "npm run tokens:build && npm run dev -w landing-page",
+    "tokens:build": "node design-tokens/scripts/build.mjs",
+    "tokens:watch": "node design-tokens/scripts/build.mjs --watch",
+    "icons:build": "node scripts/generate-icons.mjs",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run tokens:build && npm run icons:build && npm run typecheck && npm run build --workspaces --if-present",
+    "test": "tsx --test tests/*.test.ts",
+    "test:pwa": "playwright test",
+    "check": "npm run build && npm test && npm run test:pwa",
+    "preview:frontend": "npm run preview -w frontend",
+    "preview:landing": "npm run preview -w landing-page",
+    "ui:export": "node scripts/export-ui.mjs",
+    "ui:verify": "node scripts/ui-export/verify.mjs",
+    "stitch:export": "npm run tokens:build && node scripts/export-stitch.mjs",
+    "stitch:verify": "node scripts/stitch-export/verify.mjs && node --test scripts/stitch-export/test.mjs",
+    "stitch:preview": "node stitch-export/serve.mjs",
+    "stitch:dry-run": "node stitch-export/upload.mjs --dry-run",
+    "stitch:upload": "node stitch-export/upload.mjs --upload"
   },
   "devDependencies": {
-    "@playwright/test": "^1.65.1",
-    "@tailwindcss/postcss": "^4.1.0",
+    "@electric-sql/pglite": "^0.5.17",
+    "@playwright/test": "^1.58.0",
+    "@tailwindcss/node": "^4.3.5",
     "@types/node": "^22.19.0",
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
-    "tailwindcss": "^4.1.0",
-    "typescript": "^5.9.0"
+    "concurrently": "^9.2.1",
+    "esbuild": "^0.28.2",
+    "fflate": "^0.8.3",
+    "lucide-react": "^1.76.0",
+    "tsx": "^4.20.6",
+    "typescript": "~5.9.3"
   }
 }

@@ -1,9 +1,12 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  testDir: "./tests/ui",
+  testDir: './tests/browser',
   workers: 1,
-  timeout: 45000,
-  reporter: "list",
-  use: { baseURL: process.env.TEST_ORIGIN ?? "http://localhost:3000", headless: true },
+  timeout: 30_000,
+  use: { baseURL: 'http://localhost:4173', headless: true },
+  webServer: [
+    { command: 'npm run preview:frontend', url: 'http://localhost:4173', reuseExistingServer: !process.env.CI },
+    { command: 'npm run preview:landing', url: 'http://localhost:4174', reuseExistingServer: !process.env.CI },
+  ],
 });

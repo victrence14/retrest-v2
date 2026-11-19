@@ -1,0 +1,14 @@
+-- Run as the database owner in a private SQL session.
+-- Replace BOTH placeholders before running; never commit the filled-in file.
+create role teammate_alex login password 'REPLACE_WITH_A_UNIQUE_RANDOM_PASSWORD'
+  nosuperuser nocreatedb nocreaterole noinherit nobypassrls;
+grant connect on database postgres to teammate_alex;
+grant usage on schema public to teammate_alex;
+grant select on public.subscription_categories to teammate_alex;
+create policy "Alex can read categories" on public.subscription_categories
+  for select to teammate_alex using (true);
+
+-- This role can read only public reference data. Do not grant service_role,
+-- authenticated, postgres, or BYPASSRLS just to grant collaborator access.
+-- Direct SQL sessions do not automatically get a Supabase Auth identity.
+-- Use reviewed policies/grants for additional access and the JWT API for user data.

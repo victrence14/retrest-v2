@@ -1,0 +1,37 @@
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('../assets/fonts/Inter.ttf') format('truetype'); }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--color-background); color: var(--color-text); font-family: var(--font-family), var(--font-fallback); font-size: var(--font-size-md); font-weight: var(--font-weight-regular); line-height: var(--font-line-height); }
+button, input, select, textarea { font: inherit; }
+button, select { cursor: pointer; }
+button:disabled { cursor: wait; opacity: .65; }
+a { color: var(--color-accent); text-underline-offset: var(--space-1); }
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { line-height: var(--font-heading-line-height); }
+h1 { font-size: var(--font-size-xl); }
+h2, h3 { font-size: var(--font-size-lg); }
+::selection { color: var(--color-on-highlight); background: var(--color-highlight); }
+:focus-visible { outline: 3px solid var(--color-focus); outline-offset: var(--space-1); }
+.shell { max-width: var(--layout-max-width); margin-inline: auto; padding-inline: var(--space-5); }
+.header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding-block: var(--space-5); border-bottom: 1px solid var(--color-border); }
+.brand { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--color-text); font-weight: var(--font-weight-bold); font-size: var(--font-size-lg); text-decoration: none; letter-spacing: var(--font-tracking-brand); }
+.brand-mark { display: grid; place-items: center; width: var(--layout-control-height); height: var(--layout-control-height); border-radius: var(--radius-md); color: var(--color-on-accent); background: var(--color-accent); }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--layout-control-height); border: 1px solid transparent; border-radius: var(--radius-sm); padding: var(--space-2) var(--space-4); font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); background: var(--color-accent); color: var(--color-on-accent); text-decoration: none; }
+.button-quiet { background: var(--color-surface); color: var(--color-text); border-color: var(--color-border); }
+.button:hover { filter: brightness(1.08); }
+.panel { padding: var(--space-6); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-none); }
+.stack { display: flex; flex-direction: column; gap: var(--space-5); }
+.row { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
+.muted { color: var(--color-muted); }
+.eyebrow { color: var(--color-accent); font-weight: var(--font-weight-bold); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--font-tracking-eyebrow); }
+.badge { display: inline-flex; align-items: center; border-radius: var(--radius-pill); background: var(--color-highlight); color: var(--color-on-highlight); padding: var(--space-1) var(--space-3); font-size: var(--font-size-xs); font-weight: var(--font-weight-bold); }
+.theme-control { display: flex; align-items: center; gap: var(--space-2); }
+select, input, textarea { min-height: var(--layout-control-height); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); background: var(--color-background); color: var(--color-text); }
+label { display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
+.error { color: var(--color-error); }
+.success { color: var(--color-success); }
+.notice { padding: var(--space-4); background: var(--color-surface-raised); border-radius: var(--radius-sm); font-size: var(--font-size-sm); }
+.footer { padding-block: var(--space-6); color: var(--color-muted); font-size: var(--font-size-sm); border-top: 1px solid var(--color-border); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media (max-width: 640px) { .shell { padding-inline: var(--space-4); } .header { flex-wrap: wrap; } .panel { padding: var(--space-5); } .theme-control { flex-wrap: wrap; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
