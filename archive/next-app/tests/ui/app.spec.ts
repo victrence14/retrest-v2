@@ -113,7 +113,7 @@ test("landing preview and account device verification flow", async ({page}) => {
   expect(errors).toEqual([]);
 });
 
-test("summary, support drawer, and mobile subscription controls", async ({page}) => {
+test("business report, help drawer, and mobile subscription controls", async ({page}) => {
   const errors: string[]=[]; page.on("pageerror",error=>errors.push(error.message));
   await page.setViewportSize({width:390,height:844}); await page.goto("/shield");
   await page.getByRole("switch",{name:"Pause Spotify",exact:true}).click();
@@ -123,16 +123,17 @@ test("summary, support drawer, and mobile subscription controls", async ({page})
   await page.getByRole("button",{name:"Chat with us",exact:true}).click();
   const chat=page.getByRole("dialog",{name:"Chat with us"});
   await chat.getByRole("button",{name:"A blocked payment"}).click();
-  await expect(chat.getByRole("log")).toContainText("A payment can be blocked");
+  await expect(chat.getByRole("article",{name:"Help article"})).toContainText("A payment can be blocked");
+  await expect(chat.getByRole("button",{name:"Send message"})).toBeDisabled();
   await page.keyboard.press("Escape"); await expect(chat).not.toBeVisible();
   await page.getByRole("navigation",{name:"Dashboard navigation"}).getByRole("link",{name:"Insights",exact:true}).click();
   await page.getByRole("button",{name:"Generate spend summary"}).click();
   const summary=page.getByRole("dialog",{name:"Monthly spend summary"});
-  await summary.getByRole("button",{name:"Generate summary",exact:true}).click();
+  await summary.getByRole("button",{name:"Load monthly report",exact:true}).click();
   await expect(summary.locator(".summary-totals")).toBeVisible();
-  await expect(summary.getByRole("link",{name:"Send summary to email"})).toHaveAttribute("href",/^mailto:/);
-  await summary.getByLabel("Summary email recipient").fill("bad-address");
-  await expect(summary.getByRole("button",{name:"Enter a valid email address"})).toBeDisabled();
+  await expect(summary.getByText("Email delivery is not connected.",{exact:true})).toBeVisible();
+  await expect(summary.getByRole("button",{name:"Send monthly summary"})).toBeDisabled();
+  await expect(summary.locator('a[href^="mailto:"]')).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.screenshot({path:"test-results/summary-mobile.png",fullPage:true});
   await page.keyboard.press("Escape");

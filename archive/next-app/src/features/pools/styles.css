@@ -1,0 +1,69 @@
+.fe2-pools { color: var(--text, #f1f4fa); min-width: 0; }
+.fe2-pools .fe2-pool-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.fe2-pools .fe2-pool-heading h2 { margin: 6px 0; font-size: 21px; }
+.fe2-pools .fe2-pool-heading p, .fe2-pools .fe2-pool-note { color: var(--muted, #8b97ad); font-size: 12px; line-height: 1.7; }
+.fe2-pools .fe2-pool-heading > svg { color: var(--indigo, #6366f1); flex-shrink: 0; }
+.fe2-pools .fe2-pool-editor { padding: 26px; border: 1px solid var(--line, #ffffff14); border-radius: 16px; background: var(--panel, #111827); }
+.fe2-pools fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.fe2-pools label { display: grid; gap: 8px; font-size: 12px; color: var(--muted, #8b97ad); min-width: 0; }
+.fe2-pools input:not([type="checkbox"]):not([type="radio"]), .fe2-pools select { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid var(--line, #ffffff14); background: var(--bg, #090d16); border-radius: 8px; padding: 11px 12px; color: var(--text, #f1f4fa); }
+.fe2-pools input[readonly] { color: var(--muted, #8b97ad); }
+.fe2-pools input[aria-invalid="true"] { border-color: var(--red, #ef4444); }
+.fe2-pools .fe2-pool-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.fe2-pools .fe2-pool-allocation { display: flex; gap: 24px; padding: 22px 0 10px; }
+.fe2-pools .fe2-pool-allocation label { display: flex; align-items: center; gap: 8px; color: var(--text, #f1f4fa); }
+.fe2-pools input[type="radio"], .fe2-pools input[type="checkbox"] { accent-color: var(--indigo, #6366f1); }
+.fe2-pools .fe2-pool-members-editor { display: grid; gap: 16px; padding: 18px 0; }
+.fe2-pools .fe2-pool-member-editor { display: grid; grid-template-columns: 34px 1fr 1.3fr 100px 30px; align-items: end; gap: 12px; }
+.fe2-pools .fe2-pool-member-number { align-self: center; color: var(--muted, #8b97ad); text-align: center; }
+.fe2-pools .fe2-pool-member-number small { display: block; font-size: 8px; }
+.fe2-pools .fe2-pool-total { display: flex; justify-content: space-between; gap: 12px; padding: 15px 0; margin: 16px 0; border-block: 1px solid var(--line, #ffffff14); }
+.fe2-pools .fe2-pool-total[data-balanced="true"] b { color: var(--cyan, #38bdf8); }
+.fe2-pools .fe2-pool-fallback-option { display: flex; align-items: center; gap: 10px; }
+.fe2-pools .fe2-pool-fallback-option small, .fe2-pools .fe2-pool-fallback small { display: block; margin-top: 3px; color: var(--muted, #8b97ad); }
+.fe2-pools .fe2-pool-fallback-option b { color: var(--text, #f1f4fa); }
+.fe2-pools .fe2-pool-error { color: var(--red, #ef4444); font-size: 12px; margin-block: 12px; overflow-wrap: anywhere; }
+.fe2-pools .fe2-pool-editor-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+.fe2-pools .fe2-pool-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.fe2-pools .fe2-pool-card { padding: 24px; height: 100%; }
+.fe2-pools .fe2-pool-balance { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.fe2-pools .fe2-pool-balance strong { font-size: 29px; letter-spacing: -1px; }
+.fe2-pools .fe2-pool-balance span { color: var(--muted, #8b97ad); }
+.fe2-pools progress { appearance: none; width: 100%; height: 6px; border: 0; border-radius: 8px; background: var(--line, #ffffff14); accent-color: var(--indigo, #6366f1); }
+.fe2-pools progress::-webkit-progress-bar { background: var(--line, #ffffff14); border-radius: 8px; }
+.fe2-pools progress::-webkit-progress-value { background: var(--indigo, #6366f1); border-radius: 8px; }
+.fe2-pools progress::-moz-progress-bar { background: var(--indigo, #6366f1); border-radius: 8px; }
+.fe2-pools .fe2-pool-renewal { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; padding: 18px 0; color: var(--muted, #8b97ad); }
+.fe2-pools .fe2-pool-member-list { border-top: 1px solid var(--line, #ffffff14); }
+.fe2-pools .fe2-pool-member-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 0; border-bottom: 1px solid var(--line, #ffffff14); }
+.fe2-pools .fe2-pool-member-status > div { flex: 1; min-width: 140px; }
+.fe2-pools .fe2-pool-member-status small { display: block; color: var(--muted, #8b97ad); overflow-wrap: anywhere; }
+.fe2-pools .fe2-pool-state { display: inline-flex; align-items: center; gap: 5px; color: var(--amber, #f59e0b); font-size: 11px; }
+.fe2-pools .fe2-pool-state.state-paid { color: var(--cyan, #38bdf8); }
+.fe2-pools .fe2-pool-state.state-overdue { color: var(--red, #ef4444); }
+.fe2-pools .fe2-pool-fallback { display: flex; gap: 12px; align-items: center; padding: 20px 0; }
+.fe2-pools .fe2-pool-fallback > div { flex: 1; }
+.fe2-pools .fe2-pool-fallback > svg { color: var(--indigo, #6366f1); flex-shrink: 0; }
+.fe2-pools .fe2-pool-card-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.fe2-pools .fe2-pool-page-actions { display: flex; justify-content: space-between; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
+.fe2-pools .fe2-pool-page-actions p { color: var(--muted, #8b97ad); }
+.fe2-pools .fe2-pool-page-actions > div { display: flex; flex-wrap: wrap; gap: 10px; }
+.fe2-pools .fe2-pool-empty { padding: 30px; text-align: center; color: var(--muted, #8b97ad); }
+.fe2-pools .fe2-pool-empty h2 { color: var(--text, #f1f4fa); margin: 16px 0 8px; }
+.fe2-pools .fe2-pool-empty .button { margin-top: 18px; }
+@media (max-width: 900px) {
+  .fe2-pools .fe2-pool-grid { grid-template-columns: 1fr; }
+  .fe2-pools .fe2-pool-member-editor { grid-template-columns: 30px 1fr 1fr 30px; }
+  .fe2-pools .fe2-pool-member-editor > label:nth-of-type(3) { grid-column: 2 / 4; }
+  .fe2-pools .fe2-pool-member-editor > button { grid-column: 4; grid-row: 1 / 3; align-self: center; }
+}
+@media (max-width: 520px) {
+  .fe2-pools .fe2-pool-fields { grid-template-columns: 1fr; }
+  .fe2-pools .fe2-pool-member-editor { grid-template-columns: 22px 1fr 28px; }
+  .fe2-pools .fe2-pool-member-editor > label { grid-column: 2; }
+  .fe2-pools .fe2-pool-member-editor > label:nth-of-type(3) { grid-column: 2; }
+  .fe2-pools .fe2-pool-member-editor > button { grid-column: 3; grid-row: 1 / 4; }
+  .fe2-pools .fe2-pool-member-number { grid-row: 1 / 4; }
+  .fe2-pools .fe2-pool-editor, .fe2-pools .fe2-pool-card { padding: 18px; }
+  .fe2-pools .fe2-pool-total { flex-direction: column; }
+}

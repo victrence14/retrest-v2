@@ -1,0 +1,21 @@
+.fe2-support { min-width: 0; color: var(--text, #f1f4fa); }
+.fe2-support .fe2-support-availability { padding: 16px 24px; border-block: 1px solid var(--line, #ffffff14); background: var(--bg, #090d16); }
+.fe2-support .fe2-support-availability b { color: var(--amber, #f59e0b); font-size: 12px; }
+.fe2-support .fe2-support-availability p, .fe2-support .fe2-support-availability small { color: var(--muted, #8b97ad); font-size: 12px; line-height: 1.7; margin-top: 5px; }
+.fe2-support .fe2-support-topics { display: flex; flex-wrap: wrap; gap: 8px; padding: 20px 24px; }
+.fe2-support .fe2-support-topics button { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line, #ffffff14); background: var(--panel, #111827); border-radius: 8px; padding: 10px; color: var(--muted, #8b97ad); min-height: 42px; font-size: 12px; }
+.fe2-support .fe2-support-topics button[aria-pressed="true"] { color: var(--text, #f1f4fa); border-color: var(--indigo, #6366f1); }
+.fe2-support .fe2-support-article { padding: 0 24px 24px; }
+.fe2-support .fe2-support-article h3 { font-size: 21px; margin: 12px 0; }
+.fe2-support .fe2-support-article p { color: var(--muted, #8b97ad); line-height: 1.9; margin-bottom: 18px; }
+.fe2-support .fe2-support-compose { padding: 22px 24px; border-top: 1px solid var(--line, #ffffff14); }
+.fe2-support .fe2-support-compose label { display: grid; gap: 8px; font-size: 12px; color: var(--muted, #8b97ad); }
+.fe2-support .fe2-support-compose textarea { background: var(--bg, #090d16); border: 1px solid var(--line, #ffffff14); border-radius: 8px; padding: 12px; color: var(--muted, #8b97ad); resize: none; width: 100%; box-sizing: border-box; }
+.fe2-support .fe2-support-compose .button { margin-top: 12px; }
+.fe2-support .fe2-support-service-note { padding: 24px; }
+.fe2-support .fe2-support-service-note h3 { font-size: 17px; margin-bottom: 12px; }
+.fe2-support .fe2-support-service-note p { color: var(--muted, #8b97ad); font-size: 12px; line-height: 1.7; }
+@media (max-width: 520px) {
+  .fe2-support .fe2-support-availability, .fe2-support .fe2-support-topics, .fe2-support .fe2-support-article, .fe2-support .fe2-support-compose { padding-inline: 18px; }
+  .fe2-support .chat-header { flex-wrap: wrap; gap: 12px; }
+}

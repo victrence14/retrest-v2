@@ -1,7 +1,7 @@
 .workspace { display: grid; grid-template-columns: 1fr minmax(0, var(--layout-form-width)); align-items: start; gap: var(--space-8); padding-block: var(--space-8); min-height: 75vh; }
 .workspace-intro { padding-top: var(--space-6); }
 .workspace-intro .badge { align-self: flex-start; }
-.workspace-intro h1 { font-size: clamp(var(--font-size-xl), 5vw, var(--font-size-display)); }
+.workspace-intro h1 { font-size: var(--font-size-workspace-display); }
 .workspace-intro p { max-width: var(--layout-form-width); }
 .pwa-status:empty { display: none; }
 @media (max-width: 800px) { .workspace { grid-template-columns: 1fr; gap: var(--space-6); padding-block: var(--space-6); } .workspace-intro { padding-top: 0; } }

@@ -1,0 +1,12 @@
+.fe2-settings { min-width: 0; color: var(--text, #f1f4fa); }
+.fe2-settings .fe2-settings-note { color: var(--muted, #8b97ad); padding: 0 24px 18px; font-size: 12px; line-height: 1.7; }
+.fe2-settings .fe2-settings-error { padding: 0 24px 18px; color: var(--red, #ef4444); font-size: 12px; }
+.fe2-settings .fe2-settings-unavailable { display: flex; gap: 18px; padding: 24px; margin-top: 24px; }
+.fe2-settings .fe2-settings-unavailable h2 { font-size: 18px; margin-bottom: 10px; }
+.fe2-settings .fe2-settings-unavailable p { color: var(--muted, #8b97ad); font-size: 12px; line-height: 1.7; }
+.fe2-settings .fe2-settings-unavailable > svg { color: var(--indigo, #6366f1); flex-shrink: 0; }
+.fe2-settings .account-preference { min-width: 0; }
+@media (max-width: 520px) {
+  .fe2-settings .fe2-settings-note, .fe2-settings .fe2-settings-error { padding-inline: 18px; }
+  .fe2-settings .fe2-settings-unavailable { padding: 18px; }
+}

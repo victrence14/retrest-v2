@@ -1,0 +1,23 @@
+.fe2-notifications { min-width: 0; color: var(--text, #f1f4fa); }
+.fe2-notifications .fe2-notifications-heading { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 20px; }
+.fe2-notifications .eyebrow { display: flex; gap: 8px; align-items: center; }
+.fe2-notifications .fe2-notifications-heading h2 { font-size: 25px; margin: 10px 0; }
+.fe2-notifications .fe2-notifications-heading p { color: var(--muted, #8b97ad); font-size: 12px; }
+.fe2-notifications .fe2-notifications-filter { display: flex; align-items: center; gap: 8px; color: var(--muted, #8b97ad); font-size: 12px; margin-bottom: 18px; }
+.fe2-notifications input { accent-color: var(--indigo, #6366f1); }
+.fe2-notifications .fe2-notifications-list { display: grid; gap: 12px; }
+.fe2-notifications .fe2-notification { display: flex; align-items: flex-start; gap: 14px; padding: 18px; border: 1px solid var(--line, #ffffff14); border-radius: 12px; background: var(--panel, #111827); }
+.fe2-notifications .fe2-notification > svg { color: var(--indigo, #6366f1); flex-shrink: 0; margin-top: 2px; }
+.fe2-notifications .fe2-notification > div { flex: 1; min-width: 0; }
+.fe2-notifications .fe2-notification-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.fe2-notifications .fe2-notification h3 { font-size: 14px; }
+.fe2-notifications .fe2-notification-title > span { font-size: 10px; color: var(--cyan, #38bdf8); }
+.fe2-notifications .fe2-notification[data-read="true"] .fe2-notification-title > span { color: var(--muted, #8b97ad); }
+.fe2-notifications .fe2-notification p { color: var(--muted, #8b97ad); font-size: 12px; line-height: 1.7; margin-top: 8px; overflow-wrap: anywhere; }
+.fe2-notifications .fe2-notification-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.fe2-notifications .fe2-notifications-note { color: var(--muted, #8b97ad); font-size: 12px; line-height: 1.7; margin-top: 20px; }
+.fe2-notifications .fe2-notifications-error { color: var(--red, #ef4444); font-size: 12px; margin-bottom: 18px; }
+@media (max-width: 520px) {
+  .fe2-notifications .fe2-notification { padding: 14px; }
+  .fe2-notifications .fe2-notification-title { align-items: start; }
+}

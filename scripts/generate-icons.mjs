@@ -1,11 +1,15 @@
 // Small code-drawn shield icons: no image service or binary dependency required.
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
+import { flatten, resolve } from '../design-tokens/scripts/build.mjs';
 
 const tokens = JSON.parse(readFileSync(new URL('../design-tokens/tokens.json', import.meta.url), 'utf8'));
 const hex = (value) => value.slice(1).match(/.{2}/g).map((part) => parseInt(part, 16));
-const background = hex(tokens.global.palette.forest.value);
-const foreground = hex(tokens.global.palette.sage.value);
+const colors = { ...flatten(tokens.global), ...flatten(tokens.light) };
+const backgroundHex = resolve('{color.accent}', colors);
+const foregroundHex = resolve('{color.highlight}', colors);
+const background = hex(backgroundHex);
+const foreground = hex(foregroundHex);
 const output = new URL('../frontend/public/icons/', import.meta.url);
 mkdirSync(output, { recursive: true });
 
@@ -51,4 +55,8 @@ function icon(size, scale) {
 for (const [name, size, scale] of [['icon-192.png', 192, 1], ['icon-512.png', 512, 1], ['maskable-512.png', 512, .8], ['apple-touch-icon.png', 180, 1]]) {
   writeFileSync(new URL(name, output), icon(size, scale));
 }
-console.log('Generated 192px, 512px, maskable and Apple touch icons.');
+const favicon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="${backgroundHex}"/><path d="M32 12 48 19v13c0 10-7 17-16 22-9-5-16-12-16-22V19Z" fill="${foregroundHex}"/><path d="m24 32 6 6 12-14" fill="none" stroke="${backgroundHex}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>\n`;
+for (const workspace of ['frontend', 'landing-page']) {
+  writeFileSync(new URL(`../${workspace}/public/favicon.svg`, import.meta.url), favicon);
+}
+console.log('Generated token-derived PNG icons and both site favicons.');
