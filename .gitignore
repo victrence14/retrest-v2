@@ -1,15 +1,52 @@
+# Dependencies
 node_modules/
-.next/
-data/
-.env*
-!.env.example
-*.tsbuildinfo
-test-results/
+
+# Build output (Vite, Next, TypeScript, PWA dev build)
 dist/
+.next/
+dev-dist/
+.vite/
+*.tsbuildinfo
+
+# Generated export bundles and previews (repo-root outputs only)
+/exports/
+/stitch-export/
+
+# Test and coverage output
 coverage/
+.nyc_output/
+test-results/
 playwright-report/
+blob-report/
+
+# Environment files (examples stay tracked)
+.env
+.env.*
+!.env.example
+
+# Local data and caches
+data/
 .npm-cache/
-exports/
-.DS_Store
+
+# Supabase local state
 backend/supabase/.temp/
 backend/supabase/.branches/
+.supabase/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# Local archives
+*.zip
+*.tar.gz
