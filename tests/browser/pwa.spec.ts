@@ -5,7 +5,7 @@ test("manifest, PNG icons and a controlling service worker meet Chromium install
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "A little more financial peace." }),
+    page.getByRole("heading", { name: "Your money. Your rules." }),
   ).toBeVisible();
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
@@ -66,7 +66,7 @@ test("the application shell reloads offline and private API responses are absent
   await context.setOffline(true);
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "A little more financial peace." }),
+    page.getByRole("heading", { name: "Your money. Your rules." }),
   ).toBeVisible();
   await expect(page.getByText("You’re offline.")).toBeVisible();
   await context.setOffline(false);

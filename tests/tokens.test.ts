@@ -20,7 +20,7 @@ test("all theme aliases resolve and the generated CSS matches Tokens Studio sour
     readFileSync(
       new URL("../design-tokens/generated/theme.css", import.meta.url),
       "utf8",
-    ),
+    ).replace(/\r\n/g, "\n"),
   );
   const dark = { ...flatten(tokens.global), ...flatten(tokens.dark) };
   assert.equal(resolve("{color.focus}", dark), resolve("{color.accent}", dark));
