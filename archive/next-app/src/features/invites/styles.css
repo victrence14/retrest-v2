@@ -1,0 +1,12 @@
+.fe2-invites .fe2-invite-disclosure { padding: 12px 14px; border: 1px solid var(--line, #ffffff14); border-radius: 8px; background: var(--bg, #090d16); font-size: 12px; line-height: 1.7; color: var(--muted, #8b97ad); margin-bottom: 20px; }
+.fe2-invites .fe2-invite-login { margin-top: 20px; white-space: normal; text-align: center; }
+.fe2-invites .fe2-invite-note { display: block; color: var(--muted, #8b97ad); font-size: 11px; margin-top: 12px; line-height: 1.7; }
+.fe2-invites .invite-success { overflow-wrap: anywhere; }
+.fe2-invites input { min-width: 0; }
+.fe2-invites input[aria-invalid="true"] { border-color: var(--red, #ef4444); }
+.fe2-invites .form-error { margin-block: 14px; }
+.fe2-invites .button { min-height: 42px; }
+@media (max-width: 420px) {
+  .fe2-invites.invite-public-card { padding-inline: 20px; }
+  .fe2-invites .fe2-invite-login { font-size: 11px; }
+}

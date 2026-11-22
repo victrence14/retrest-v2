@@ -1,13 +1,39 @@
-# RETREST monorepo
+# RETREST
+
+The default commands run the original dark RETREST application shown in the screen recording. Its existing Next.js source, routes, styles, and persistent demo database are preserved in [archive/next-app](./archive/next-app).
+
+For team assignments, dependencies, and demo acceptance checks, use the [four-developer pitch-readiness handoff](./PITCH-READINESS.md).
+
+## Run the restored application
+
+Use Node.js 22.18 or newer and npm 10 or newer. Install the original application's dependencies if they are not already present:
+
+```sh
+npm --prefix archive/next-app install
+npm run dev
+```
+
+Open [the dashboard](http://localhost:3000/shield), [login](http://localhost:3000/login), or [the original landing page](http://localhost:3000). Pools, Insights, Transactions, Account settings, and Support use the original application routes and styling. The root development command starts this application on port 3000.
+
+```sh
+npm run typecheck
+npm test
+npm run build
+npm start
+```
+
+With the application running, `npm run test:ui` runs its existing desktop/mobile browser checks and `npm run test:http` checks its demo APIs. These tests mutate and reset demo data; use a disposable copy or back up the local database first. See the [original application guide](./archive/next-app/README.md) for the existing demo behavior and API contracts.
+
+## Preserved starter workspaces
 
 An npm-workspaces starter for the RETREST web app, API, and marketing site. The web app and landing page use React 19, TypeScript, and Vite. The API uses Node.js, Express 5, TypeScript, and Supabase (PostgreSQL + Auth). Both sites share Tokens Studio design tokens, theme controls, and base styles. The frontend includes a production service worker, an installable manifest, signup/login/logout, and a protected profile editor.
 
-This is a fresh starter. The previous Next.js/SQLite demo, original configuration, tests, and documentation are preserved in [archive/next-app](./archive/next-app), outside the active workspaces. Its payment simulator and financial operations have **not** been ported into this starter. Its ignored local environment/data remain archived locally; do not commit them.
+The React/Vite, Express/Supabase, and design-token workspaces remain available separately. Their financial operations have **not** been ported from the original application. Run them explicitly with the `:starter` commands documented below. The original application's ignored local environment/data remain in place; do not commit them.
 
-## Structure
+## Starter structure
 
 ```text
-frontend/                  # Main React/Vite app; port 5173
+frontend/                  # Separate React/Vite starter app; port 5173
   src/components/          # AuthForm, ProfilePanel, PwaStatus
   src/lib/                 # Browser Supabase client + authenticated API requests
   public/manifest.json     # Generated manifest, icons and favicon
@@ -21,10 +47,10 @@ design-tokens/             # Shared npm workspace: @retrest/design-tokens
   generated/theme.css      # Generated CSS variables (committed)
   src/                     # Base styles, React theme provider, early theme bootstrap
 scripts/                   # Dependency-free PWA icon generator
-stitch-export/             # Current UI: design spec, 24 HTML/PNG variants, prompts
+stitch-export/             # Starter UI: design spec, 24 HTML/PNG variants, prompts
 exports/                   # Ignored downloadable UI/Stitch ZIP packages
 tests/                     # API/token tests and Chromium PWA/theme checks
-archive/next-app/           # Preserved previous application; not an npm workspace
+archive/next-app/           # Default original application; not an npm workspace
 ```
 
 ## Prerequisites
@@ -34,7 +60,7 @@ archive/next-app/           # Preserved previous application; not an npm workspa
 - A current Chromium browser for install-prompt testing. Safari supports installation through Add to Home Screen, with a different browser UI.
 - Optional: `psql` for the database RLS test. Docker is needed only when running Supabase locally.
 
-## Quick start
+## Starter quick start
 
 Run once at the repository root:
 
@@ -48,7 +74,7 @@ cp landing-page/.env.example landing-page/.env.local
 Configure Supabase and apply the SQL below **before running all services**. Fill in the copied environment files, then:
 
 ```sh
-npm run dev
+npm run dev:starter
 ```
 
 | Service | Development | Production preview |
@@ -57,17 +83,19 @@ npm run dev
 | API | http://localhost:3001/api/health | `npm run start -w backend` |
 | Landing page | http://localhost:5174 | http://localhost:4174 |
 
-The root development command watches the token source as well as each service. You can also run each workspace independently in separate terminals:
+The starter development command watches the token source as well as each service. You can also run each workspace independently in separate terminals:
 
 ```sh
-npm run dev:frontend
+npm run dev:starter-frontend
 npm run dev:backend
-npm run dev:landing
+npm run dev:starter-landing
 # Optional when editing tokens alongside individual workspace commands:
 npm run tokens:watch
 ```
 
 Install dependencies from the root; npm links the shared token workspace automatically. Each workspace also has `dev`, `build`, and `typecheck` scripts. `backend` has `start`; both Vite workspaces have `preview`. Frontend and landing page render without Supabase credentials, with account actions disabled. The backend intentionally refuses to start with missing or placeholder credentials.
+
+The Vite frontend opens at `/login`; `/preview` shows a read-only shell with no account data or financial actions. Shield, subscriptions, wallets, card controls, and account routes require a Supabase session. Live Shield, subscription, wallet, and card data remain unavailable until their backend contracts are implemented.
 
 ## Environment variables
 
@@ -93,6 +121,8 @@ All real env files are ignored; only `.env.example` files are tracked. Share cre
 
 ## Supabase database and authentication
 
+The Supabase connection and database-backed sign-up, login, logout, and protected profile belong to the separate Vite frontend and Express backend. The restored application on port 3000 still uses its original SQLite demo database and browser-only account previews; it has not been connected to this backend. Migration/seed files, owner-based RLS, environment examples, and collaborator access instructions are present. Live connection and email-confirmation checks require configuring an isolated Supabase project or local stack using the steps below.
+
 ### Hosted development project
 
 1. Create a Supabase development project. Set both apps' URL/key variables to that project.
@@ -106,11 +136,11 @@ All real env files are ignored; only `.env.example` files are tracked. Share cre
    ```
 
    Then apply `supabase/seed.sql` through the SQL Editor. `db push` tracks migrations; do not also reapply the same migration manually.
-4. In **Authentication → URL Configuration**, set the Site URL to `http://localhost:5173`. Add these redirect URLs for email confirmation:
-   - `http://localhost:5173/`
-   - `http://127.0.0.1:5173/`
-   - `http://localhost:4173/`
-   - `http://127.0.0.1:4173/`
+4. In **Authentication → URL Configuration**, set the Site URL to `http://localhost:5173`. Add these local development redirect patterns for confirmation and password recovery:
+   - `http://localhost:5173/**`
+   - `http://127.0.0.1:5173/**`
+   - `http://localhost:4173/**`
+   - `http://127.0.0.1:4173/**`
 5. Enable email/password signup, keep email confirmation enabled, and set a minimum password length of at least 8. Use Supabase's test email limits during development; configure SMTP for production. Add the real HTTPS frontend URL to the redirect allowlist before deployment.
 6. Create an account in the frontend, open its confirmation link, sign in, save a display name, and sign out. Email confirmation uses PKCE; open the link in the browser that initiated signup. Profile creation happens automatically through the `auth.users` trigger.
 
@@ -127,7 +157,7 @@ supabase status
 
 `db reset` **deletes local data** and reapplies migrations/seeds; use it only for a disposable local stack. The committed CLI config already points to the seed file. Copy the local API URL and anon/publishable key from `supabase status` into the frontend and backend env files. The API URL is normally `http://127.0.0.1:54321`; Studio is normally `http://127.0.0.1:54323`. Confirmation emails go to the local email viewer whose URL `supabase status` reports.
 
-Return to the root and run `npm run dev`. Stop the local stack with `supabase stop` from `backend/`. New schema changes belong in new timestamped files under `backend/supabase/migrations/`; keep development, staging, and production projects separate.
+Return to the root and run `npm run dev:starter`. Stop the local stack with `supabase stop` from `backend/`. New schema changes belong in new timestamped files under `backend/supabase/migrations/`; keep development, staging, and production projects separate.
 
 ### Tables, RLS, and protected APIs
 
@@ -161,8 +191,8 @@ The frontend uses `vite-plugin-pwa`/Workbox with a generated service worker and 
 Service workers are **disabled in Vite development**. Test a production build:
 
 ```sh
-npm run build
-npm run preview:frontend
+npm run build:starter
+npm run preview:starter-frontend
 # In another terminal, if you want authentication/profile requests:
 npm run dev:backend
 ```
@@ -178,12 +208,12 @@ The automated PWA check validates Chromium's installability errors, the real PNG
 
 ```sh
 npm exec playwright install chromium
-npm run build
-npm test
+npm run build:starter
+npm run test:starter
 npm run test:pwa
 ```
 
-`npm run test:pwa` starts both preview servers and requires built output. The API tests use an injected Supabase verifier/database stub to check middleware denial, verified identity scoping, malicious payload rejection, and safe errors. `npm test` also executes the migration, repeatable seed, RLS SQL assertions and teammate-role template in embedded PostgreSQL (PGlite), with a minimal Supabase identity schema. It checks actual SQL permissions without project credentials. For validation against Supabase's full local environment, run this **against a disposable local Supabase instance after migration/seed**:
+`npm run test:pwa` starts both starter preview servers and requires built output. The API tests use an injected Supabase verifier/database stub to check middleware denial, verified identity scoping, malicious payload rejection, and safe errors. `npm run test:starter` also executes the migration, repeatable seed, RLS SQL assertions and teammate-role template in embedded PostgreSQL (PGlite), with a minimal Supabase identity schema. It checks actual SQL permissions without project credentials. For validation against Supabase's full local environment, run this **against a disposable local Supabase instance after migration/seed**:
 
 ```sh
 psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
@@ -194,7 +224,7 @@ The SQL test creates two temporary users inside a transaction, checks owner isol
 
 ## Shared themes and Figma
 
-[design-tokens/tokens.json](./design-tokens/tokens.json) is the source of truth. Its Tokens Studio format uses `value`/`type` tokens, aliases such as `{palette.forest}`, ordered token sets, and Light/Dark theme metadata. `global` holds palette, typography, spacing, radii, shadows and layout sizes; `light` and `dark` define the same semantic color names. Both applications bundle the licensed variable [Inter font](./design-tokens/assets/fonts/Inter.ttf) with a system-font fallback, making no external font request. The frontend precaches it for offline use. Install the same font in Figma to match browser text metrics; its [SIL Open Font License](./design-tokens/assets/fonts/OFL.txt) is included.
+[design-tokens/tokens.json](./design-tokens/tokens.json) is the source of truth for the two Vite sites' navy/purple Light and Dark palettes. Its Tokens Studio format uses `value`/`type` tokens, aliases such as `{palette.purple}`, ordered token sets, and Light/Dark theme metadata. `global` holds palette, typography (including fluid headings), spacing, radii, border widths, shadows and layout sizes; `light` and `dark` define the same semantic color names. Both applications bundle the licensed variable [Inter font](./design-tokens/assets/fonts/Inter.ttf) with a system-font fallback, making no external font request. The frontend precaches it for offline use. Install the same font in Figma to match browser text metrics; its [SIL Open Font License](./design-tokens/assets/fonts/OFL.txt) is included.
 
 The generator resolves aliases, rejects missing/circular references and mismatched theme keys, and produces CSS variables such as `--color-background`, `--color-text`, `--font-family`, and `--space-5`. Both Vite apps import the **same generated CSS and base styles** through the shared workspace. App-specific layout styles use these variables.
 
@@ -205,9 +235,11 @@ npm run tokens:build
 npm run icons:build
 ```
 
-The normal root build runs both automatically. Commit changed token source and generated CSS/manifest/icons together. Use semantic tokens in component CSS rather than inline color literals. To add a semantic color, define it in **both** theme sets; to extend typography or spacing, add to `global`. The generator supports scalar tokens and aliases; add explicit conversion before introducing composite typography/shadow tokens or DTCG `$value`/`$type` syntax.
+`npm run build:starter` runs both generators automatically, including both favicons. Commit changed token source and generated CSS/manifest/icons together. Use semantic tokens in component CSS rather than inline color literals. To add a semantic color, define it in **both** theme sets; to extend typography or spacing, add to `global`. The generator supports scalar tokens and aliases; add explicit conversion before introducing composite typography/shadow tokens or DTCG `$value`/`$type` syntax.
 
-Both sites follow `prefers-color-scheme` initially. The shared provider tracks live OS changes in System mode. A toggle and System/Light/Dark selector let users override it, saving explicit preferences under `retrest.theme` in `localStorage`. The early bootstrap runs before rendering to restore saved preferences. Storage failures are handled, and tabs on the same origin receive storage changes. **Different origins/ports have independent storage**, so the app and marketing site share tokens and behavior but retain separate choices unless you later add a same-domain cookie or account-level preference.
+Both sites follow `prefers-color-scheme` initially. The shared provider tracks live OS changes in System mode. A toggle and System/Light/Dark selector let users override it, saving explicit preferences under `retrest.theme` in `localStorage`. Choosing System removes the saved override. The early bootstrap runs before rendering to restore saved preferences and token-derived browser toolbar colors; native form controls follow the active `color-scheme`. Storage failures are handled, and tabs on the same origin receive storage changes. **Different origins/ports have independent storage**, so the app and marketing site share tokens and behavior but retain separate choices unless you later add a same-domain cookie or account-level preference.
+
+[The theme browser tests](./tests/browser/theme.spec.ts) verify both system preferences, live changes, saved overrides before application JavaScript loads, reset to System, cross-tab updates, unavailable/corrupt storage, themed form controls, and viewport fit. `npm run test:pwa` runs these alongside the PWA tests in both desktop (1440px) and mobile (375px) Chromium projects after `npm run build:starter`. The restored application's routes and startup remain separate.
 
 For Figma:
 
@@ -281,15 +313,15 @@ The helper loads this `.env` only for explicit uploads; dry-run reads no credent
 
 The portable snapshots preserve the implemented UI. Stitch generation and Figma transfer are explicit team workflows and may require corrections; the package does not promise automatic bidirectional code/Stitch/Figma synchronization.
 
-## Production builds
+## Starter production builds
 
 ```sh
-npm run build                    # Tokens, icons, all type checks and all builds
+npm run build:starter            # Tokens, icons, all starter type checks and builds
 npm run start -w backend         # Compiled Express server
-npm run preview:frontend         # Local frontend preview
-npm run preview:landing          # Local marketing preview
+npm run preview:starter-frontend # Local starter frontend preview
+npm run preview:starter-landing  # Local starter marketing preview
 ```
 
 Deploy `frontend/dist` and `landing-page/dist` as separate static sites over HTTPS. Configure the frontend host to serve `index.html` for application navigations, while routing `/api` to Express rather than the SPA fallback. Alternatively set `VITE_API_URL=https://api.example.com/api` before building and put the frontend's exact origin in the backend CORS allowlist. The Vite proxy is only for development/preview. Deploy the backend with its compiled output, runtime dependencies, and server environment variables. Add production Auth redirects and the marketing `VITE_APP_URL`, then rebuild.
 
-This starter does not implement payment processing, subscription CRUD UI, email delivery infrastructure, or offline writes. Extend those features with new migrations, owner-scoped endpoints, and appropriate tests. Keep the archived demo as reference until its behavior is deliberately migrated.
+This starter does not implement payment processing, subscription CRUD UI, email delivery infrastructure, or offline writes. Extend those features with new migrations, owner-scoped endpoints, and appropriate tests. The original Next.js application remains the default application until a migration is deliberately accepted.

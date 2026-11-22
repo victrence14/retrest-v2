@@ -1,0 +1,47 @@
+.fe2-insights { min-width: 0; color: var(--text, #f1f4fa); }
+.fe2-insights .fe2-insights-heading h2 { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 22px; }
+.fe2-insights .fe2-insights-heading p, .fe2-insights .fe2-insights-note { color: var(--muted, #8b97ad); font-size: 12px; line-height: 1.7; }
+.fe2-insights .fe2-vault, .fe2-insights.fe2-vault { padding: 24px; margin-bottom: 24px; }
+.fe2-insights .fe2-vault-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 22px 0; }
+.fe2-insights label { display: grid; gap: 7px; color: var(--muted, #8b97ad); font-size: 12px; min-width: 0; }
+.fe2-insights select, .fe2-insights input { color: var(--text, #f1f4fa); background: var(--bg, #090d16); border: 1px solid var(--line, #ffffff14); padding: 10px 12px; border-radius: 8px; min-width: 0; box-sizing: border-box; }
+.fe2-insights .fe2-business-totals { display: flex; gap: 28px; flex-wrap: wrap; padding: 20px 0; border-block: 1px solid var(--line, #ffffff14); margin: 20px 0; }
+.fe2-insights .fe2-business-totals > div { display: grid; gap: 7px; min-width: 140px; flex: 1; }
+.fe2-insights .fe2-business-totals span { font-size: 9px; letter-spacing: 1px; color: var(--muted, #8b97ad); }
+.fe2-insights .fe2-business-totals strong { font-size: 25px; font-variant-numeric: tabular-nums; }
+.fe2-insights .fe2-vault-table { border-collapse: collapse; width: 100%; font-size: 12px; }
+.fe2-insights .fe2-vault-table th { text-align: left; font-weight: 500; font-size: 10px; color: var(--muted, #8b97ad); padding: 12px; }
+.fe2-insights .fe2-vault-table td { padding: 14px 12px; border-top: 1px solid var(--line, #ffffff14); white-space: nowrap; }
+.fe2-insights .fe2-vault-table small { color: var(--muted, #8b97ad); }
+.fe2-insights .fe2-vault-table .text-button { min-height: 40px; }
+.fe2-insights .fe2-vault-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 18px 0; color: var(--muted, #8b97ad); font-size: 12px; }
+.fe2-insights .fe2-vault-footer > div { display: flex; gap: 12px; align-items: center; }
+.fe2-insights .fe2-insights-error { color: var(--red, #ef4444); margin-block: 16px; }
+.fe2-insights .fe2-insights-error .button { margin-top: 14px; }
+.fe2-insights .fe2-summary-form { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+.fe2-insights .fe2-summary-downloads { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
+.fe2-insights .fe2-summary-delivery { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; padding: 20px; border: 1px solid var(--line, #ffffff14); border-radius: 12px; margin: 24px 0 12px; }
+.fe2-insights .fe2-summary-delivery > div { flex: 1; min-width: 180px; }
+.fe2-insights .fe2-summary-delivery h3 { font-size: 14px; }
+.fe2-insights .fe2-summary-delivery p, .fe2-insights .fe2-summary-delivery small { color: var(--muted, #8b97ad); font-size: 12px; margin-top: 6px; overflow-wrap: anywhere; }
+.fe2-insights .fe2-insight-overview { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+.fe2-insights .fe2-insight-card { padding: 24px; }
+.fe2-insights .fe2-insight-card > .eyebrow { display: block; margin: 16px 0 8px; }
+.fe2-insights .fe2-insight-card > h2 { font-size: 23px; margin-bottom: 10px; }
+.fe2-insights .fe2-insight-card > p { color: var(--muted, #8b97ad); line-height: 1.7; margin-bottom: 16px; }
+.fe2-insights .fe2-insight-card > .text-button { display: flex; margin-block: 12px; }
+.fe2-insights .generated-summary h3 { font-size: 20px; }
+.fe2-insights.spend-summary-content > h2 { font-size: 28px; line-height: 1.25; letter-spacing: -0.5px; margin: 12px 0; }
+.fe2-insights.spend-summary-content > .modal-description { font-size: 13px; color: var(--muted, #8b97ad); line-height: 1.7; }
+.fe2-insights .fe2-insight-card > .spend-summary-content { margin-top: 24px; border-top: 1px solid var(--line, #ffffff14); padding-top: 24px; }
+@media (max-width: 650px) {
+  .fe2-insights .fe2-insight-overview { grid-template-columns: 1fr; }
+  .fe2-insights .fe2-vault, .fe2-insights.fe2-vault, .fe2-insights .fe2-insight-card { padding: 18px; }
+  .fe2-insights .fe2-insights-heading h2 { font-size: 18px; }
+  .fe2-insights .fe2-vault-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fe2-insights .fe2-vault-controls > label:first-child { grid-column: 1 / -1; }
+  .fe2-insights .fe2-vault-controls > .button { grid-column: 1 / -1; }
+  .fe2-insights .fe2-vault-controls > .icon-button { grid-column: 2; justify-self: end; }
+  .fe2-insights .fe2-business-totals { gap: 18px; }
+  .fe2-insights .fe2-summary-delivery { padding: 16px; }
+}
