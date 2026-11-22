@@ -95,6 +95,8 @@ npm run tokens:watch
 
 Install dependencies from the root; npm links the shared token workspace automatically. Each workspace also has `dev`, `build`, and `typecheck` scripts. `backend` has `start`; both Vite workspaces have `preview`. Frontend and landing page render without Supabase credentials, with account actions disabled. The backend intentionally refuses to start with missing or placeholder credentials.
 
+The Vite frontend opens at `/login`; `/preview` shows a read-only shell with no account data or financial actions. Shield, subscriptions, wallets, card controls, and account routes require a Supabase session. Live Shield, subscription, wallet, and card data remain unavailable until their backend contracts are implemented.
+
 ## Environment variables
 
 | File | Variable | Purpose |
@@ -134,11 +136,11 @@ The Supabase connection and database-backed sign-up, login, logout, and protecte
    ```
 
    Then apply `supabase/seed.sql` through the SQL Editor. `db push` tracks migrations; do not also reapply the same migration manually.
-4. In **Authentication → URL Configuration**, set the Site URL to `http://localhost:5173`. Add these redirect URLs for email confirmation:
-   - `http://localhost:5173/`
-   - `http://127.0.0.1:5173/`
-   - `http://localhost:4173/`
-   - `http://127.0.0.1:4173/`
+4. In **Authentication → URL Configuration**, set the Site URL to `http://localhost:5173`. Add these local development redirect patterns for confirmation and password recovery:
+   - `http://localhost:5173/**`
+   - `http://127.0.0.1:5173/**`
+   - `http://localhost:4173/**`
+   - `http://127.0.0.1:4173/**`
 5. Enable email/password signup, keep email confirmation enabled, and set a minimum password length of at least 8. Use Supabase's test email limits during development; configure SMTP for production. Add the real HTTPS frontend URL to the redirect allowlist before deployment.
 6. Create an account in the frontend, open its confirmation link, sign in, save a display name, and sign out. Email confirmation uses PKCE; open the link in the browser that initiated signup. Profile creation happens automatically through the `auth.users` trigger.
 
