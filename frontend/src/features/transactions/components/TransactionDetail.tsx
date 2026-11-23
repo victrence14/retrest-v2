@@ -5,12 +5,14 @@ import { Download, FileText, X } from "lucide-react";
 import type { Transaction } from "@retrest/shared";
 import { money } from "@retrest/shared";
 import { errorMessage, isAbort, saveFile } from "@/lib/api/client";
+import { useToast } from "@/hooks/useToast";
 import { loadReceipt, receiptEligible } from "../api";
 import "../styles.css";
 
 export interface TransactionDetailProps { transaction: Transaction; onClose: () => void }
 
 export function TransactionDetail({ transaction, onClose }: TransactionDetailProps) {
+  const { notify } = useToast();
   const dialog = useRef<HTMLDialogElement>(null);
   const preview = useRef<HTMLIFrameElement>(null);
   const request = useRef<AbortController | null>(null);
@@ -37,7 +39,8 @@ export function TransactionDetail({ transaction, onClose }: TransactionDetailPro
       const blob = await loadReceipt(transaction, controller.signal);
       if (download) saveFile(blob, `retrest-receipt-${transaction.id}.pdf`);
       else { if (objectUrl.current) URL.revokeObjectURL(objectUrl.current); const url = URL.createObjectURL(blob); objectUrl.current = url; setPdfUrl(url); }
-    } catch (error) { if (!isAbort(error)) setError(errorMessage(error)); }
+      notify(download ? "Receipt PDF download started." : "Your receipt is ready to view.");
+    } catch (error) { if (!isAbort(error)) { const message = errorMessage(error); setError(message); notify(message, true); } }
     finally { lock.current = false; if (!controller.signal.aborted) setBusy(false); }
   }
 

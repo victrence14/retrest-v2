@@ -1,38 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { PGlite } from "@electric-sql/pglite";
+import { createTestPostgres } from "./helpers/postgres.ts";
 
 test("migration, repeatable seed and RLS policies execute in PostgreSQL", async () => {
-  const db = new PGlite();
+  const db = await createTestPostgres();
   try {
     // Emulate Supabase's existing identity schema/roles, then execute the actual
     // committed SQL against PostgreSQL. No project, keys or network are used.
-    await db.exec(`
-      create role anon nologin;
-      create role authenticated nologin;
-      create role service_role nologin bypassrls;
-      grant usage on schema public to anon, authenticated, service_role;
-      create schema auth;
-      create table auth.users (
-        id uuid primary key,
-        email text,
-        raw_user_meta_data jsonb not null default '{}'
-      );
-      create function auth.uid() returns uuid language sql stable as $$
-        select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
-      $$;
-      grant usage on schema auth to authenticated;
-    `);
-    await db.exec(
-      readFileSync(
-        new URL(
-          "../supabase/migrations/20261119000000_initial.sql",
-          import.meta.url,
-        ),
-        "utf8",
-      ),
-    );
     const seed = readFileSync(
       new URL("../supabase/seed.sql", import.meta.url),
       "utf8",

@@ -12,6 +12,7 @@ export function sessionUser(response: Response): string {
 }
 
 export function currentUser(config: Config, request: Request): string | null {
+  if (!config.demoEnabled) return null;
   return verifySession(config.sessionSecret, readCookie(request.headers.cookie, SESSION_COOKIE));
 }
 
@@ -23,10 +24,8 @@ export function isTrustedMutation(config: Config, request: Request): boolean {
   if (request.get("sec-fetch-site") === "cross-site") return false;
   const origin = request.get("origin");
   if (!origin) return true;
-  const forwardedHost = request.get("x-forwarded-host")?.split(",")[0]?.trim();
   const trusted = new Set(config.corsOrigins);
   trusted.add(`${request.protocol}://${request.get("host")}`);
-  if (forwardedHost) trusted.add(`${request.protocol}://${forwardedHost}`);
   return trusted.has(origin);
 }
 

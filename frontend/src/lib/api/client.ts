@@ -4,14 +4,18 @@
  */
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status = 0) {
+  requestId: string | null;
+  retryAfter: number | null;
+  constructor(message: string, status = 0, requestId: string | null = null, retryAfter: number | null = null) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.requestId = requestId;
+    this.retryAfter = retryAfter;
   }
 }
 
-type Method = "GET" | "POST" | "PATCH";
+type Method = "GET" | "POST" | "PATCH" | "DELETE";
 
 function apiPath(path: string) {
   if (!path.startsWith("/api/") || /[\\#\r\n]/.test(path)) throw new ApiError("Invalid API destination.");
@@ -21,7 +25,7 @@ function apiPath(path: string) {
 async function rejection(response: Response): Promise<ApiError> {
   let message =
     response.status === 401
-      ? "Your demo session has ended. Open Shield, then try again."
+      ? "Your session has ended. Please log in again."
       : "The server could not confirm this action. Please try again.";
   try {
     const body: unknown = await response.json();
@@ -29,7 +33,8 @@ async function rejection(response: Response): Promise<ApiError> {
   } catch {
     /* Keep the safe message for non-JSON responses. */
   }
-  return new ApiError(message, response.status);
+  const retry = Number(response.headers.get("Retry-After"));
+  return new ApiError(message, response.status, response.headers.get("X-Request-ID"), Number.isFinite(retry) && retry > 0 ? retry : null);
 }
 
 let session: Promise<unknown> | null = null;
@@ -39,26 +44,29 @@ let session: Promise<unknown> | null = null;
  * Only the signed-in workspace calls this. Public pages (invites) never receive a session.
  */
 export function ensureSession() {
-  session ??= fetch("/api/session", { method: "POST", credentials: "same-origin" }).catch(() => {
-    session = null;
-  });
+  session ??= fetch("/api/session", { method: "POST", credentials: "same-origin" })
+    .then(async response => {
+      if (!response.ok) throw await rejection(response);
+      return response;
+    })
+    .catch(error => { session = null; throw error; });
   return session;
 }
 
 export async function requestJson<T>(
   path: string,
-  options: { method?: Method; body?: unknown; signal?: AbortSignal } = {},
+  options: { method?: Method; body?: unknown; signal?: AbortSignal; headers?: HeadersInit } = {},
 ): Promise<T> {
+  const headers = new Headers(options.headers);
+  headers.set("Accept", "application/json");
+  if (options.body !== undefined) headers.set("Content-Type", "application/json");
   const response = await fetch(apiPath(path), {
     method: options.method ?? "GET",
     credentials: "same-origin",
     cache: "no-store",
     redirect: "error",
     signal: options.signal,
-    headers: {
-      Accept: "application/json",
-      ...(options.body === undefined ? {} : { "Content-Type": "application/json" }),
-    },
+    headers,
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   });
   if (!response.ok) throw await rejection(response);

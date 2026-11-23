@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Currency, Dashboard, DemoResult, Subscription } from "@retrest/shared";
 import { BottomNav, PageFooter, PageHeading, Sidebar, Topbar } from "@/components/layout";
-import { ToastMessage } from "@/components/ui";
 import { useClipboard } from "@/hooks/useClipboard";
 import { useToast } from "@/hooks/useToast";
 import { useWorkspaceState } from "@/hooks/useWorkspaceState";
@@ -50,7 +49,7 @@ function SectionContent({ section }: { section: WorkspaceSection }) {
 
 /** The signed-in workspace: shared state, layout shell, current section, and dialogs. */
 export default function WorkspaceApp({ initial, section = "shield" }: { initial: Dashboard; section?: WorkspaceSection }) {
-  const { toast, notify, dismiss } = useToast();
+  const { notify } = useToast();
   const { copy, copied } = useClipboard(notify);
   const { data, setData, busy, isBusy, mutate, formError, setFormError } = useWorkspaceState(initial, notify);
   const account = usePreviewAccount();
@@ -129,7 +128,6 @@ export default function WorkspaceApp({ initial, section = "shield" }: { initial:
           </main>
         </div>
         <BottomNav section={section} />
-        {toast && <ToastMessage toast={toast} onDismiss={dismiss} />}
         <WorkspaceDialogs dialog={dialog} />
       </div>
     </WorkspaceProvider>

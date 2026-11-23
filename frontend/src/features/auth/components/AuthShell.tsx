@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { ThemeToggle } from "@/features/theme/ThemeToggle";
 
 export default function AuthShell({ children }: { children: ReactNode }) {
   return (
@@ -97,11 +98,14 @@ export default function AuthShell({ children }: { children: ReactNode }) {
             retrest<span>.</span>
           </Link>
           <span className="preview-pill">
-            <span className="status-dot" /> FRONTEND PREVIEW
+            <ShieldCheck size={13} /> SECURE ACCOUNT ACCESS
           </span>
-          <Link href="/support" className="auth-support-link">
-            <MessageCircle size={15} /> Chat with us <ArrowUpRight size={13} />
-          </Link>
+          <div className="auth-topbar-actions">
+            <ThemeToggle />
+            <Link href="/support" className="auth-support-link" aria-label="Chat with us">
+              <MessageCircle size={15} /> Chat with us <ArrowUpRight size={13} />
+            </Link>
+          </div>
         </header>
         <main className="auth-main">{children}</main>
         <footer className="auth-content-footer">

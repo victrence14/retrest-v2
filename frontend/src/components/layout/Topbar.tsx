@@ -4,9 +4,10 @@ import Link from "next/link";
 import { Bell, ChevronDown, ChevronRight, MessageCircle, Play } from "lucide-react";
 import { Avatar, Brand } from "@/components/ui";
 import { useWorkspace } from "@/features/workspace/WorkspaceContext";
+import { ThemeToggle } from "@/features/theme/ThemeToggle";
 
 export function Topbar({ pageLabel }: { pageLabel: string }) {
-  const { currency, setCurrency, openDialog, totals, profile, account } = useWorkspace();
+  const { currency, setCurrency, openDialog, totals, profile, account, notify } = useWorkspace();
   return (
     <header className="topbar">
       <Link href="/" className="header-brand" aria-label="RETREST home">
@@ -18,20 +19,25 @@ export function Topbar({ pageLabel }: { pageLabel: string }) {
         <span>{pageLabel}</span>
       </div>
       <div className="topbar-actions">
+        <ThemeToggle />
         <span className="live-chip">
           <span className="status-dot" />
           System operational
         </span>
         <button
           className="currency-control"
-          onClick={() => setCurrency(currency === "NGN" ? "USD" : "NGN")}
+          onClick={() => {
+            const next = currency === "NGN" ? "USD" : "NGN";
+            setCurrency(next);
+            notify(`Display currency switched to ${next}.`);
+          }}
           aria-label="Switch display currency"
         >
           <span className={"flag " + (currency === "USD" ? "us" : "")} />
           {currency}
           <ChevronDown size={13} />
         </button>
-        <button className="button simulator-trigger" onClick={() => openDialog({ kind: "demo" })}>
+        <button className="button simulator-trigger" aria-label="Demo Simulator" onClick={() => openDialog({ kind: "demo" })}>
           <Play size={13} fill="currentColor" />
           <span>Demo Simulator</span>
         </button>
@@ -44,7 +50,7 @@ export function Topbar({ pageLabel }: { pageLabel: string }) {
           {totals.unread.length > 0 && <i />}
         </button>
         <Link
-          href={account ? "/settings" : "/login?next=%2Fshield"}
+          href={account ? "/settings?demo=1" : "/login?next=%2Fshield"}
           className="topbar-profile"
           aria-label={account ? "Account settings" : "Log in"}
         >

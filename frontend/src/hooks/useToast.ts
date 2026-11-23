@@ -1,29 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useContext } from "react";
 
 export interface Toast {
+  id: number;
   text: string;
   error?: boolean;
 }
 
-const TOAST_DURATION_MS = 4500;
+export interface ToastContextValue {
+  toast: Toast | null;
+  notify: (text: string, error?: boolean) => void;
+  dismiss: () => void;
+}
 
-/** A single transient status message that auto-dismisses. */
+export const ToastContext = createContext<ToastContextValue | null>(null);
+
+/** Shared notifications survive auth redirects and workspace navigation. */
 export function useToast() {
-  const [toast, setToast] = useState<Toast | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const notify = useCallback((text: string, error = false) => {
-    setToast({ text, error });
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setToast(null), TOAST_DURATION_MS);
-  }, []);
-  const dismiss = useCallback(() => setToast(null), []);
-
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
-
-  return { toast, notify, dismiss };
+  const context = useContext(ToastContext);
+  if (!context) throw new Error("Notifications require the application toast provider.");
+  return context;
 }

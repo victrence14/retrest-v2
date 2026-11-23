@@ -20,6 +20,8 @@ import {
   Zap,
 } from "lucide-react";
 import SupportChat from "@/features/support/components/SupportChat";
+import { ThemeToggle } from "@/features/theme/ThemeToggle";
+import { useToast } from "@/hooks/useToast";
 import "../styles.css";
 
 const subscriptions = [
@@ -58,6 +60,7 @@ const subscriptions = [
 ];
 
 export default function LandingPage() {
+  const { notify } = useToast();
   const [active, setActive] = useState([true, true, true, true]);
   const [event, setEvent] = useState(
     "Spotify demo charge approved. Your configured rules apply.",
@@ -79,6 +82,7 @@ export default function LandingPage() {
         : subscriptions[index].name +
             " is active. Your price limit still applies.",
     );
+    notify(`${subscriptions[index].name} ${active[index] ? "paused" : "activated"} in the demo preview.`);
   }
 
   return (
@@ -93,11 +97,12 @@ export default function LandingPage() {
         <nav aria-label="Website navigation">
           <a href="#how-it-works">How it works</a>
           <a href="#features">Your shield</a>
-          <Link href="/shield?simulator=1">
+          <Link href="/shield?demo=1&simulator=1">
             <Play size={13} /> Demo Simulator
           </Link>
         </nav>
         <div className="landing-header-actions">
+          <ThemeToggle />
           <span className="landing-currencies">
             <span className="flag" /> NGN <span>/</span> USD
           </span>
@@ -109,9 +114,9 @@ export default function LandingPage() {
             <MessageCircle size={19} />
           </button>
           <Link href="/login" className="landing-login">
-            Account preview <ArrowUpRight size={13} />
+            Log in <ArrowUpRight size={13} />
           </Link>
-          <Link href="/shield" className="button primary" data-product-cta>
+          <Link href="/shield?demo=1" className="button primary" data-product-cta>
             Open demo <ArrowRight size={14} />
           </Link>
         </div>
@@ -136,10 +141,10 @@ export default function LandingPage() {
               <br className="desktop-br" /> and download your business receipts.
             </p>
             <div className="hero-actions">
-              <Link href="/shield" className="button primary" data-product-cta>
+              <Link href="/shield?demo=1" className="button primary" data-product-cta>
                 Launch the demo <ArrowUpRight size={17} />
               </Link>
-              <Link href="/shield?simulator=1" className="button secondary">
+              <Link href="/shield?demo=1&simulator=1" className="button secondary">
                 <span className="play-circle">
                   <Play size={11} fill="currentColor" />
                 </span>{" "}
@@ -165,7 +170,7 @@ export default function LandingPage() {
                 <b>NGN + USD, in one wallet.</b>
               </span>
             </div>
-            <p className="fe2-marketing-status"><b>Working product demonstration.</b> Issuance, funding, FX and settlement are simulated. Account/device screens are previews; live support and email delivery are not connected.</p>
+            <p className="fe2-marketing-status"><b>Explore the demo or create an account.</b> Account subscriptions, reports, device settings and support messages use the account API. Card issuance, wallet funding and FX in the demo are simulated.</p>
           </div>
           <div className="hero-product">
             <div className="preview-topline">
@@ -399,7 +404,7 @@ export default function LandingPage() {
               funding and price limits before recording a decision. Card
               issuance and provider settlement are future integrations.
             </p>
-            <Link href="/shield?simulator=1" className="text-button">
+            <Link href="/shield?demo=1&simulator=1" className="text-button">
               Try a server-backed demo decision <ArrowUpRight size={16} />
             </Link>
           </div>
@@ -449,11 +454,11 @@ export default function LandingPage() {
             <span>financial peace.</span>
           </h2>
           <p>Explore your subscription rules in the product demo.</p>
-          <Link href="/shield" className="button primary" data-product-cta>
+          <Link href="/shield?demo=1" className="button primary" data-product-cta>
             Explore the product demo <ArrowRight size={16} />
           </Link>
           <Link href="/signup" className="text-button">
-            Preview sign up <ArrowUpRight size={14} />
+            Create an account <ArrowUpRight size={14} />
           </Link>
         </section>
       </main>

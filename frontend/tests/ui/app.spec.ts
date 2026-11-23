@@ -1,13 +1,27 @@
 import { test, expect } from "@playwright/test";
 
-test.beforeAll(async ({ request }) => {
-  await request.post("/api/session");
-  const reset = await request.post("/api/demo/reset");
+let disposableBackend = false;
+
+test.beforeEach(async ({ context }) => {
+  // Keep these UI checks independent of the external font service.
+  await context.route("https://fonts.googleapis.com/**", route => route.fulfill({ contentType: "text/css", body: "" }));
+});
+
+test.beforeAll(async ({ request, baseURL }) => {
+  const health = await request.get("/api/health");
+  expect(health.ok()).toBe(true);
+  expect((await health.json()).test_instance, "Browser demo tests require an in-memory API running in test mode.").toBe(true);
+  disposableBackend = true;
+  const headers = { Origin: baseURL ?? "http://localhost:3000" };
+  await request.post("/api/session", { headers });
+  const reset = await request.post("/api/demo/reset", { headers });
   expect(reset.ok()).toBe(true);
 });
-test.afterAll(async ({ request }) => {
-  await request.post("/api/session");
-  await request.post("/api/demo/reset");
+test.afterAll(async ({ request, baseURL }) => {
+  if (!disposableBackend) return;
+  const headers = { Origin: baseURL ?? "http://localhost:3000" };
+  await request.post("/api/session", { headers });
+  await request.post("/api/demo/reset", { headers });
 });
 
 test("desktop command center, merchant switches, receipt exports, and invite flow", async ({
@@ -16,13 +30,10 @@ test("desktop command center, merchant switches, receipt exports, and invite flo
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.setViewportSize({ width: 1440, height: 1050 });
-  await page.goto("/shield");
+  await page.goto("/shield?demo=1");
   await expect(
     page.getByRole("heading", { name: "Stay in control." }),
   ).toBeVisible();
-  await page.waitForResponse(
-    (r) => r.url().endsWith("/api/state") && r.status() === 200,
-  );
   await page.screenshot({
     path: "test-results/shield-desktop.png",
     fullPage: true,
@@ -106,11 +117,11 @@ test("desktop command center, merchant switches, receipt exports, and invite flo
     fullPage: true,
   });
   const download = page.waitForEvent("download");
-  await page.getByRole("link", { name: "Export receipt pack" }).click();
+  await page.getByRole("button", { name: "Export receipt pack" }).click();
   expect((await download).suggestedFilename()).toMatch(/\.csv$/);
   await page.getByLabel("Export receipt format").selectOption("pdf");
   const pdf = page.waitForEvent("download");
-  await page.getByRole("link", { name: "Export receipt pack" }).click();
+  await page.getByRole("button", { name: "Export receipt pack" }).click();
   expect((await pdf).suggestedFilename()).toMatch(/\.pdf$/);
   expect(errors).toEqual([]);
 });
@@ -119,7 +130,7 @@ test("mobile has three tabs, no page overflow, and usable simulator", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/shield");
+  await page.goto("/shield?demo=1");
   await expect(
     page.getByRole("heading", { name: "Stay in control." }),
   ).toBeVisible();
@@ -162,7 +173,7 @@ test("mobile has three tabs, no page overflow, and usable simulator", async ({
   }
 });
 
-test("landing preview and account device verification flow", async ({
+test("landing preview feedback and simulator navigation", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -175,7 +186,7 @@ test("landing preview and account device verification flow", async ({
     }),
   ).toBeVisible();
   await page.getByRole("switch", { name: "Pause Netflix preview" }).click();
-  await expect(page.getByRole("status")).toContainText("Netflix paused");
+  await expect(page.locator(".preview-event")).toContainText("Netflix paused");
   await page.screenshot({
     path: "test-results/landing-desktop.png",
     fullPage: true,
@@ -190,54 +201,7 @@ test("landing preview and account device verification flow", async ({
     path: "test-results/landing-mobile.png",
     fullPage: true,
   });
-  await page.goto("/signup");
-  await page.getByLabel("Full name").fill("Amina Bello");
-  await page.getByLabel("Email address").fill("amina@example.com");
-  await page.getByLabel("Password", { exact: true }).fill("DemoPass123");
-  await page
-    .getByLabel("Confirm password", { exact: true })
-    .fill("DemoPass123");
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Verify this device." }),
-  ).toBeVisible();
-  await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Verify & trust device" }).click();
-  await expect(page.locator("#otp-error")).toContainText("123456");
-  await page.getByLabel("Verification digit 1", { exact: true }).fill("123456");
-  await expect(page.getByLabel("Verification digit 6")).toHaveValue("6");
-  await page.screenshot({
-    path: "test-results/device-mobile.png",
-    fullPage: true,
-  });
-  await page.getByRole("button", { name: "Verify & trust device" }).click();
-  await expect(page).toHaveURL(/\/shield$/);
-  await expect(
-    page.getByRole("heading", { name: "Stay in control." }),
-  ).toBeVisible();
-  await page.goto("/login");
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.screenshot({
-    path: "test-results/login-desktop.png",
-    fullPage: true,
-  });
-  await page.getByLabel("Email address").fill("amina@example.com");
-  await page.getByLabel("Password", { exact: true }).fill("DemoPass123");
-  await page.getByRole("button", { name: "Log in", exact: true }).click();
-  await expect(page).toHaveURL(/\/shield$/);
-  await page.goto("/forgot-password");
-  await page.getByLabel("Email address").fill("amina@example.com");
-  await page.getByRole("button", { name: "Send reset link" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Recovery, previewed." }),
-  ).toBeVisible();
-  await page.getByRole("link", { name: "Preview password reset" }).click();
-  await page.getByLabel("New password", { exact: true }).fill("NewDemo123");
-  await page.getByLabel("Confirm password", { exact: true }).fill("NewDemo123");
-  await page.getByRole("button", { name: "Reset password" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Your password is ready." }),
-  ).toBeVisible();
   await page.goto("/");
   await page
     .getByRole("navigation", { name: "Website navigation" })
@@ -255,7 +219,7 @@ test("business report, help drawer, and mobile subscription controls", async ({
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/shield");
+  await page.goto("/shield?demo=1");
   await page
     .getByRole("switch", { name: "Pause Spotify", exact: true })
     .click();
@@ -310,9 +274,9 @@ test("business report, help drawer, and mobile subscription controls", async ({
     await page.setViewportSize({ width, height: 844 });
     for (const route of [
       "/",
-      "/shield",
-      "/pools",
-      "/insights",
+      "/shield?demo=1",
+      "/pools?demo=1",
+      "/insights?demo=1",
       "/login",
       "/device-binding",
     ]) {

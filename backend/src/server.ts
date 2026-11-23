@@ -8,12 +8,21 @@ loadEnv({ path: join(BACKEND_ROOT, ".env"), quiet: true });
 
 try {
   const config = readConfig(process.env);
-  const server = createApp(config).listen(config.port, () => {
+  const app = createApp(config);
+  const server = app.listen(config.port, () => {
     console.log(`RETREST API listening on http://localhost:${config.port}`);
-    if (!config.supabase) console.log("Supabase is not configured; /api/me and /api/profile answer 503.");
+    if (!config.supabase) console.log("Supabase is not configured; authenticated account APIs answer 503.");
   });
+  server.requestTimeout = 15_000;
+  server.headersTimeout = 10_000;
+  let stopping = false;
   const shutdown = () => {
-    server.close(() => process.exit(0));
+    if (stopping) return;
+    stopping = true;
+    server.close(() => {
+      app.locals.close();
+      process.exit(0);
+    });
     setTimeout(() => process.exit(1), 10_000).unref();
   };
   process.on("SIGINT", shutdown);

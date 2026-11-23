@@ -28,7 +28,7 @@ export function ShieldSummaryPanel() {
       </div>
       <strong>{money(totals.shieldSavings, currency)}</strong>
       <span className="summary-note">from {totals.blocked.length} blocked attempts</span>
-      <button className="text-button" onClick={() => router.push("/insights")}>
+      <button className="text-button" onClick={() => router.push("/insights?demo=1")}>
         Meet your insights <ArrowUpRight size={15} />
       </button>
     </section>

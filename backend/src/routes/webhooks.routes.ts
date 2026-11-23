@@ -14,6 +14,7 @@ export function webhookRoutes({ db, config }: AppContext) {
   router.use(express.text({ type: () => true, limit: "16kb" }));
 
   router.post("/card-auth", (request, response) => {
+    if (!config.demoEnabled) return sendError(response, 503, "The demo authorization engine is disabled.");
     const secret = config.webhookSecret;
     if (!secret) return sendError(response, 503, "Issuer webhook secret is not configured");
     const raw = typeof request.body === "string" ? request.body : "";

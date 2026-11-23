@@ -14,10 +14,10 @@ export function initializeDatabase(db: DatabaseSync) {
 }
 
 /** Opens (creating if needed) the SQLite database and seeds the demo account once. */
-export function openDatabase(path: string): DatabaseSync {
+export function openDatabase(path: string, options: { seed?: boolean } = {}): DatabaseSync {
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   const db = initializeDatabase(new DatabaseSync(path));
-  seedDatabase(db);
+  if (options.seed !== false) seedDatabase(db);
   return db;
 }
 

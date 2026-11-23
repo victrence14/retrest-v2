@@ -31,7 +31,7 @@ export function sessionRoutes(context: AppContext) {
   // First server render: the session's workspace, or the public demo workspace before a session exists.
   router.get("/bootstrap", (request, response) => {
     const userId = currentUser(config, request) ?? (config.demoEnabled ? DEMO_USER_ID : null);
-    if (!userId) return sendError(response, 401, "The demo is disabled. Account authentication connects in the next phase.");
+    if (!userId) return sendError(response, 401, "The demo is disabled. Use the authenticated /api/v1 account APIs.");
     response.json(dashboardFor(context, userId));
   });
 

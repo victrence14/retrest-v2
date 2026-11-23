@@ -179,11 +179,36 @@ test("an unavailable auth verifier never permits access or reveals internals", a
     const response = await fetch(`${url}/api/me`, {
       headers: { authorization: "Bearer valid-token" },
     });
-    assert.equal(response.status, 500);
+    assert.equal(response.status, 503);
     assert.deepEqual(await response.json(), {
-      error: "An unexpected server error occurred.",
+      error: "Authentication provider temporarily unavailable.",
     });
   });
+});
+
+test("provider throttling, retryable fetch failures and server errors return 503 without granting a database identity", async () => {
+  const { clients, tokens } = fakeClients();
+  clients.auth = {
+    auth: {
+      async getUser(token: string) {
+        return { data: { user: null }, error: {
+          name: token === "retryable" ? "AuthRetryableFetchError" : "AuthApiError",
+          status: token === "throttled" ? 429 : token === "server-error" ? 503 : undefined,
+          message: "private provider details",
+        } };
+      },
+    },
+  } as unknown as SupabaseClient;
+  await withApi(clients, async (url) => {
+    for (const token of ["throttled", "server-error", "retryable"]) {
+      for (const path of ["/api/me", "/api/v1/settings"]) {
+        const response = await fetch(url + path, { headers: { authorization: "Bearer " + token } });
+        assert.equal(response.status, 503);
+        assert.deepEqual(await response.json(), { error: "Authentication provider temporarily unavailable." });
+      }
+    }
+  });
+  assert.deepEqual(tokens, []);
 });
 
 test("configuration rejects placeholders and validation errors never contain secrets", () => {

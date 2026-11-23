@@ -11,5 +11,5 @@
     "noUncheckedIndexedAccess": false,
     "paths": { "@retrest/shared": ["../shared/src/index.ts"] }
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "../shared/src/**/*.ts"]
+  "include": ["src/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts", "../shared/src/**/*.ts"]
 }

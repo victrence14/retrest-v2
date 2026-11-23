@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useId, useRef, useState, type FormEvent } from "react";
 import { Users, ShieldCheck, ArrowRight, CheckCircle2, RefreshCw } from "lucide-react";
 import { errorMessage } from "@/lib/api/client";
+import { useToast } from "@/hooks/useToast";
 import { inviteReturnPath, submitDemoContribution } from "../api";
 import "../styles.css";
 
@@ -11,6 +12,7 @@ import "../styles.css";
 export interface InvitePageProps { token: string; name: string; host: string; merchant: string; amount: string; date: string; demo: boolean }
 
 export function InvitePage({ token, name, host, merchant, amount, date, demo }: InvitePageProps) {
+  const { notify } = useToast();
   const id = useId();
   const [email, setEmail] = useState("");
   const [result, setResult] = useState("");
@@ -22,10 +24,10 @@ export function InvitePage({ token, name, host, merchant, amount, date, demo }: 
     event?.preventDefault();
     if (lock.current || !demo) return;
     const address = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) { setError("Enter the email your host added to this pool."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) { setError("Enter the email your host added to this pool."); notify("Enter the email your host added to this pool.", true); return; }
     lock.current = true; setBusy(true); setError("");
-    try { const confirmed = await submitDemoContribution(token, address); setEmail(address); setResult(confirmed.message); }
-    catch (error) { setError(errorMessage(error)); }
+    try { const confirmed = await submitDemoContribution(token, address); setEmail(address); setResult(confirmed.message); notify(confirmed.message); }
+    catch (error) { const message = errorMessage(error); setError(message); notify(message, true); }
     finally { lock.current = false; setBusy(false); }
   }
 

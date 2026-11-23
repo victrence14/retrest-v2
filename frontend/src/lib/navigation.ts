@@ -32,10 +32,10 @@ export const workspacePages = {
 } as const;
 
 export type WorkspaceSection = keyof typeof workspacePages;
-export type AuthMode = "login" | "signup" | "forgot-password" | "reset-password" | "device-binding";
-export type AuthSearchParams = Promise<{ next?: string | string[] }>;
+export type AuthMode = "login" | "signup" | "forgot-password" | "reset-password" | "device-binding" | "otp";
+export type AuthSearchParams = Promise<{ next?: string | string[]; intent?: string | string[] }>;
 
-// Only known local destinations are accepted by the preview authentication flow.
+// Only known local destinations are accepted after authentication.
 export function safeDestination(value?: string | string[]): string {
   if (typeof value !== "string") return "/shield";
   if (Object.values(workspacePages).some(page => page.href === value)) return value;

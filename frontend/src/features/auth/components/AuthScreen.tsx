@@ -2,612 +2,273 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-  type FormEvent,
-} from "react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  KeyRound,
-  LoaderCircle,
-  Mail,
-  Monitor,
-  ShieldCheck,
-  Smartphone,
-} from "lucide-react";
-import { type AuthMode } from "@/lib/navigation";
-import {
-  currentPreviewDevice,
-  DEMO_PROFILE,
-  readPreviewAccount,
-  savePreviewAccount,
-} from "@/features/auth/preview-account";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Eye, EyeOff, LoaderCircle, Mail, Monitor, ShieldCheck } from "lucide-react";
+import type { AuthMode } from "@/lib/navigation";
+import { errorMessage } from "@/lib/api/client";
+import { useToast } from "@/hooks/useToast";
+import { registerAccountDevice } from "@/features/account/api";
+import { useAuthVerification, type VerificationIntent } from "../AuthVerificationContext";
+import { cleanCallbackUrl, finishAuthCallback, forgotPassword, login, readAuthCallback, resendConfirmation, resetPassword, signup, verifyEmailCode, type AuthResult } from "../api";
 
 const content = {
-  login: {
-    kicker: "GOOD TO HAVE YOU BACK",
-    heading: "A little more peace",
-    description:
-      "Log in to take a breath. Your subscriptions are in good hands.",
-    action: "Log in",
-  },
-  signup: {
-    kicker: "YOUR NEXT MONEY MOVE",
-    heading: "Less worry. More living",
-    description:
-      "One card. Your rules. A little more room for the things you love.",
-    action: "Create account",
-  },
-  "forgot-password": {
-    kicker: "LET’S GET YOU BACK IN",
-    heading: "Forgot happens",
-    description: "Enter your email and we’ll help you find your way back.",
-    action: "Send reset link",
-  },
-  "reset-password": {
-    kicker: "A FRESH START",
-    heading: "Make it a good one",
-    description: "Choose a new password that’s just for your RETREST account.",
-    action: "Reset password",
-  },
-  "device-binding": {
-    kicker: "ONE LAST LITTLE CHECK",
-    heading: "Verify this device",
-    description:
-      "A new browser needs your approval. Verify it before adding it to your trusted devices.",
-    action: "Verify & trust device",
-  },
+  login: { kicker: "GOOD TO HAVE YOU BACK", heading: "A little more peace", description: "Log in to manage your subscriptions and account.", action: "Log in" },
+  signup: { kicker: "YOUR NEXT MONEY MOVE", heading: "Less worry. More living", description: "Create your account and keep your subscriptions organised.", action: "Create account" },
+  "forgot-password": { kicker: "LET’S GET YOU BACK IN", heading: "Forgot happens", description: "Enter your email and we’ll help you find your way back.", action: "Send reset link" },
+  "reset-password": { kicker: "A FRESH START", heading: "Make it a good one", description: "Choose a new password after opening your recovery link.", action: "Reset password" },
+  "device-binding": { kicker: "YOUR TRUSTED DEVICES", heading: "Trust this browser", description: "Add a browser you recognise to your signed-in account.", action: "Trust this browser" },
+  otp: { kicker: "ONE MORE STEP", heading: "Confirm your email", description: "Enter the verification code from your email, or open the verification link in that message.", action: "Verify code" },
 } as const;
 
-function PasswordField({
-  id,
-  label,
-  value,
-  onChange,
-  error,
-  isNew = false,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  isNew?: boolean;
+function PasswordField({ id, label, value, onChange, error, isNew = false }: {
+  id: string; label: string; value: string; onChange: (value: string) => void; error?: string; isNew?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
-  return (
-    <div className="auth-field">
-      <label htmlFor={id}>{label}</label>
-      <div className="auth-password-wrap">
-        <input
-          id={id}
-          name={id}
-          type={visible ? "text" : "password"}
-          autoComplete={isNew ? "new-password" : "current-password"}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={isNew ? "Make it yours" : "Your password"}
-          maxLength={128}
-          required
-          aria-invalid={!!error}
-          aria-describedby={error ? id + "-error" : undefined}
-        />
-        <button
-          type="button"
-          aria-label={(visible ? "Hide " : "Show ") + label.toLowerCase()}
-          onClick={() => setVisible(!visible)}
-        >
-          {visible ? <EyeOff size={17} /> : <Eye size={17} />}
-        </button>
-      </div>
-      {error && (
-        <span className="field-error" id={id + "-error"}>
-          {error}
-        </span>
-      )}
+  return <div className="auth-field">
+    <label htmlFor={id}>{label}</label>
+    <div className="auth-password-wrap">
+      <input id={id} name={id} type={visible ? "text" : "password"} autoComplete={isNew ? "new-password" : "current-password"}
+        value={value} onChange={event => onChange(event.target.value)} placeholder={isNew ? "At least 12 characters" : "Your password"}
+        maxLength={128} required aria-invalid={!!error} aria-describedby={error ? id + "-error" : undefined} />
+      <button type="button" aria-label={(visible ? "Hide " : "Show ") + label.toLowerCase()} onClick={() => setVisible(!visible)}>
+        {visible ? <EyeOff size={17} /> : <Eye size={17} />}
+      </button>
     </div>
-  );
+    {error && <span className="field-error" id={id + "-error"}>{error}</span>}
+  </div>;
 }
 
-function PasswordChecklist({ password }: { password: string }) {
-  const checks = [
-    { label: "8 characters", passed: password.length >= 8 },
-    { label: "A letter", passed: /[a-zA-Z]/.test(password) },
-    { label: "A number", passed: /\d/.test(password) },
-  ];
-  return (
-    <div className="password-checklist" aria-label="Password requirements">
-      {checks.map((check) => (
-        <span key={check.label} className={check.passed ? "passed" : ""}>
-          <Check size={11} /> {check.label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-export default function AuthScreen({
-  mode,
-  destination = "/shield",
-}: {
-  mode: AuthMode;
-  destination?: string;
+export default function AuthScreen({ mode, destination = "/shield", verificationIntent = "signup" }: {
+  mode: AuthMode; destination?: string; verificationIntent?: VerificationIntent;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const { notify } = useToast();
+  const { verification, rememberVerification, clearVerification } = useAuthVerification();
+  const [submitting, startTransition] = useTransition();
+  const [callbackPending, setCallbackPending] = useState(false);
+  const callbackTask = useRef<Promise<{ result: AuthResult; recovery: boolean }> | null>(null);
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(mode === "otp" ? verification?.email ?? "" : "");
+  const [code, setCode] = useState("");
+  const [resendWait, setResendWait] = useState(0);
+  const resendDeadline = useRef(0);
+  const [confirmationNotice, setConfirmationNotice] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [complete, setComplete] = useState(false);
   const [deviceName, setDeviceName] = useState("This browser");
-  const [deviceKind, setDeviceKind] = useState<"desktop" | "mobile">("desktop");
   const [trustDevice, setTrustDevice] = useState(false);
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const [deviceId, setDeviceId] = useState("");
-  const [timeZone, setTimeZone] = useState("");
-  function enterDigit(index: number, value: string) {
-    const digits = value.replace(/\D/g, "").slice(0, 6);
-    if (digits.length > 1) {
-      setOtp(Array.from({ length: 6 }, (_, i) => digits[i] ?? ""));
-      otpRefs.current[Math.min(digits.length, 5)]?.focus();
-    } else {
-      setOtp((previous) =>
-        previous.map((digit, i) => (i === index ? digits : digit)),
-      );
-      if (digits && index < 5) otpRefs.current[index + 1]?.focus();
-    }
-  }
-  const copy = content[mode];
+  const submitLock = useRef(false);
   const nextQuery = "?next=" + encodeURIComponent(destination);
   const newPassword = mode === "signup" || mode === "reset-password";
-  const hasEmail =
-    mode === "login" || mode === "signup" || mode === "forgot-password";
+  const hasEmail = ["login", "signup", "forgot-password", "otp"].includes(mode);
   const hasPassword = mode === "login" || newPassword;
+  const pending = submitting || callbackPending;
+  const resendActive = resendWait > 0;
+  const copy = mode === "otp" && verificationIntent === "recovery"
+    ? { ...content.otp, heading: "Verify your reset code", description: "Enter the recovery code from your email to choose a new password." }
+    : content[mode];
 
   useEffect(() => {
-    if (mode !== "device-binding") return;
-    const device = currentPreviewDevice();
-    setDeviceName(device.name);
-    setDeviceKind(device.kind);
-    setDeviceId(device.id);
-    setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  }, [mode]);
+    if (mode !== "otp" || !verification || verification.intent !== verificationIntent) return;
+    setEmail(verification.email);
+    resendDeadline.current = verification.requestedAt + 60000;
+    setResendWait(Math.max(0, Math.ceil((verification.requestedAt + 60000 - Date.now()) / 1000)));
+  }, [mode, verification, verificationIntent]);
+  useEffect(() => {
+    if (!resendActive) return;
+    const timer = setInterval(() => setResendWait(Math.max(0, Math.ceil((resendDeadline.current - Date.now()) / 1000))), 1000);
+    return () => clearInterval(timer);
+  }, [resendActive]);
+
+  function startResendCooldown() {
+    resendDeadline.current = Date.now() + 60000;
+    setResendWait(60);
+  }
+
+  useEffect(() => {
+    let active = true;
+    if (!callbackTask.current) {
+      const url = new URL(window.location.href);
+      try {
+        let verifier: string | null = null;
+        try { verifier = sessionStorage.getItem("retrest.auth.pkce_verifier"); } catch { /* Optional PKCE client state. */ }
+        const callback = readAuthCallback(url, verifier);
+        if (!callback) return;
+        window.history.replaceState(null, "", cleanCallbackUrl(url));
+        // Reuse a one-time verification in React Strict Mode instead of consuming the link twice.
+        callbackTask.current = finishAuthCallback(callback).then(result => ({ result, recovery: callback.recovery }));
+      } catch (error) {
+        window.history.replaceState(null, "", cleanCallbackUrl(url));
+        setErrors({ form: errorMessage(error) });
+        notify(errorMessage(error), true);
+        return;
+      }
+    }
+    setCallbackPending(true);
+    callbackTask.current.then(({ result, recovery }) => {
+      if (!active) return;
+      if (result.confirmation_required) {
+        setConfirmationNotice("This email confirmation is recorded. Confirm the other address to finish your email change.");
+        notify("Email confirmation recorded. Check the other inbox to finish.");
+      } else if (recovery) {
+        notify("Recovery link verified. Choose your new password.");
+        if (window.location.pathname !== "/reset-password") router.replace("/reset-password" + nextQuery);
+      } else {
+        notify("Email verification successful. You are signed in.");
+        router.replace(destination); router.refresh();
+      }
+      try { sessionStorage.removeItem("retrest.auth.pkce_verifier"); } catch { /* Storage can be unavailable. */ }
+    }).catch(error => { if (active) { const message = errorMessage(error); setErrors({ form: message }); notify(message, true); } })
+      .finally(() => { if (active) setCallbackPending(false); });
+    return () => { active = false; };
+  }, [router, destination, nextQuery, notify]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending || submitLock.current) return;
     const invalid: Record<string, string> = {};
     const address = email.trim().toLowerCase();
-    if (mode === "signup" && name.trim().length < 2)
-      invalid.name = "Please enter your name.";
-    if (hasEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address))
-      invalid.email = "Enter a valid email address.";
+    if (mode === "signup" && !name.trim()) invalid.name = "Please enter your name.";
+    if (hasEmail && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address) || address.length > 254)) invalid.email = "Enter a valid email address.";
     if (hasPassword && !password) invalid.password = "Enter your password.";
-    if (
-      newPassword &&
-      (password.length < 8 ||
-        !/[a-zA-Z]/.test(password) ||
-        !/\d/.test(password))
-    ) {
-      invalid.password =
-        "Use at least 8 characters, including a letter and a number.";
-    }
-    if (newPassword && password !== confirmation)
-      invalid.confirmation = "Your passwords don’t match.";
-    if (mode === "device-binding" && !deviceName.trim())
-      invalid.device = "Give this device a name.";
-    if (mode === "device-binding" && otp.join("") !== "123456")
-      invalid.otp = "Enter the six-digit demo code: 123456.";
-    if (mode === "device-binding" && !trustDevice)
-      invalid.device = "Confirm you recognise this device.";
+    if (newPassword && password.length < 12) invalid.password = "Use at least 12 characters.";
+    if (newPassword && password !== confirmation) invalid.confirmation = "Your passwords don’t match.";
+    if (mode === "device-binding" && !deviceName.trim()) invalid.device = "Give this browser a name.";
+    if (mode === "device-binding" && !trustDevice) invalid.device = "Confirm you recognise this browser.";
+    if (mode === "otp" && !/^[0-9]{6,10}$/.test(code)) invalid.code = "Enter the complete verification code from your email.";
     setErrors(invalid);
-    if (Object.keys(invalid).length) return;
-
-    if (mode === "forgot-password" || mode === "reset-password") {
-      setPassword("");
-      setConfirmation("");
-      setComplete(true);
-      return;
-    }
-
-    const previous = readPreviewAccount();
-    if (mode === "device-binding") {
-      savePreviewAccount({
-        profile: previous?.profile ?? DEMO_PROFILE,
-        device: {
-          name: deviceName.trim(),
-          kind: deviceKind,
-          id: deviceId,
-          addedAt: new Date().toISOString(),
-        },
-      });
-      startTransition(() => router.push(destination));
-      return;
-    }
-
-    const sameProfile = previous?.profile.email === address;
-    const knownDevice =
-      sameProfile && previous.device?.id === currentPreviewDevice().id;
-    savePreviewAccount({
-      profile: {
-        name:
-          mode === "signup"
-            ? name.trim()
-            : sameProfile
-              ? previous.profile.name
-              : address.split("@")[0].replace(/[._-]/g, " "),
-        email: address,
-        phone: sameProfile ? previous.profile.phone : "",
-      },
-      device: sameProfile ? previous.device : null,
+    if (Object.keys(invalid).length) { notify("Check the highlighted fields and try again.", true); return; }
+    submitLock.current = true;
+    startTransition(async () => {
+      try {
+        if (mode === "signup") {
+          await signup(address, password, name.trim());
+          rememberVerification(address, "signup"); startResendCooldown(); setComplete(true);
+          notify("Signup received. Check your email to confirm your account.");
+        } else if (mode === "forgot-password") {
+          await forgotPassword(address);
+          rememberVerification(address, "recovery"); startResendCooldown(); setComplete(true);
+          notify("Password reset requested. Check your email.");
+        } else if (mode === "reset-password") {
+          await resetPassword(password); setComplete(true); notify("Your password has been updated successfully.");
+        } else if (mode === "device-binding") {
+          await registerAccountDevice(deviceName.trim()); notify("This browser has been added to your trusted devices.");
+          router.replace(destination); router.refresh();
+        } else if (mode === "otp") {
+          await verifyEmailCode(address, code, verificationIntent);
+          setCode(""); clearVerification();
+          notify(verificationIntent === "recovery" ? "Code verified. Choose your new password." : "Email verified. You are signed in.");
+          router.replace(verificationIntent === "recovery" ? "/reset-password" + nextQuery : destination); router.refresh();
+        } else {
+          await login(address, password); notify("You have logged in successfully.");
+          router.replace(destination); router.refresh();
+        }
+        setPassword(""); setConfirmation("");
+      } catch (error) { const message = errorMessage(error); setErrors({ form: message }); notify(message, true); }
+      finally { submitLock.current = false; }
     });
-    setPassword("");
-    setConfirmation("");
-    startTransition(() =>
-      router.push(
-        mode === "login" && knownDevice && previous.device
-          ? destination
-          : "/device-binding" + nextQuery,
-      ),
-    );
+  }
+
+  function resend(intent: VerificationIntent) {
+    if (pending || resendWait || submitLock.current) return;
+    const address = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address) || address.length > 254) {
+      setErrors({ email: "Enter a valid email address." }); notify("Enter your email address before requesting another code.", true); return;
+    }
+    submitLock.current = true;
+    startTransition(async () => {
+      try {
+        await (intent === "recovery" ? forgotPassword(address) : resendConfirmation(address));
+        rememberVerification(address, intent); setCode(""); startResendCooldown(); setErrors({});
+        notify("A new verification email has been requested. Check your inbox.");
+      } catch (error) { const message = errorMessage(error); setErrors({ form: message }); notify(message, true); }
+      finally { submitLock.current = false; }
+    });
   }
 
   if (complete) {
     const recovery = mode === "forgot-password";
-    return (
-      <div className="auth-form-container auth-success" role="status">
-        <span className="auth-success-icon">
-          {recovery ? <Mail size={27} /> : <CheckCircle2 size={29} />}
-        </span>
-        <div className="eyebrow">
-          {recovery ? "THE NEXT STEP IS READY" : "LOOKING GOOD"}
-        </div>
-        <h1>
-          {recovery ? "Recovery, previewed" : "Your password is ready"}
-          <span>.</span>
-        </h1>
-        <p>
-          {recovery ? (
-            <>
-              A reset link will go to <strong>{email.trim()}</strong> when
-              account authentication is connected.
-            </>
-          ) : (
-            "Your new password meets the requirements. Continue to the login preview when you’re ready."
-          )}
-        </p>
-        {recovery && (
-          <Link
-            href={"/reset-password" + nextQuery}
-            className="button primary full-width"
-          >
-            Preview password reset <ArrowRight size={16} />
-          </Link>
-        )}
-        <Link
-          href={"/login" + nextQuery}
-          className={
-            "button full-width " + (recovery ? "secondary" : "primary")
-          }
-        >
-          <ArrowLeft size={15} /> Back to login
-        </Link>
-        <small className="auth-preview-note">
-          Frontend preview. No credentials have been updated.
-        </small>
-      </div>
-    );
+    const signupComplete = mode === "signup";
+    return <div className="auth-form-container auth-success" role="status">
+      <span className="auth-success-icon">{recovery || signupComplete ? <Mail size={27} /> : <CheckCircle2 size={29} />}</span>
+      <div className="eyebrow">YOUR NEXT STEP</div>
+      <h1>{signupComplete ? "Check your inbox" : recovery ? "Check your email" : "Password updated"}<span>.</span></h1>
+      <p>{signupComplete ? <>Confirm your email using the link sent to <strong>{email.trim()}</strong>, then log in.</>
+        : recovery ? "If an account exists for that email, a password recovery link will be sent. Open it to continue."
+        : "Your new password has been saved. You can continue to your account."}</p>
+      {(signupComplete || recovery) && <>
+        <Link href={"/otp" + nextQuery + (recovery ? "&intent=recovery" : "")} className="button secondary full-width">Enter the code from my email <Mail size={16} /></Link>
+        <button type="button" className="text-button auth-resend" disabled={pending || resendWait > 0} onClick={() => resend(recovery ? "recovery" : "signup")}>
+          {resendWait ? `Resend email in ${resendWait}s` : "Resend verification email"}
+        </button>
+      </>}
+      {errors.form && <p className="form-error" role="alert">{errors.form}</p>}
+      <Link href={mode === "reset-password" ? destination : "/login" + nextQuery} className="button primary full-width">
+        <ArrowLeft size={15} />{mode === "reset-password" ? "Open my account" : "Back to login"}
+      </Link>
+    </div>;
   }
 
-  return (
-    <div className="auth-form-container">
-      {(mode === "signup" || mode === "device-binding") && (
-        <div className="auth-stepper" aria-label="Account setup progress">
-          <span className={mode === "signup" ? "current" : "done"}>
-            <i>{mode === "signup" ? "1" : <Check size={11} />}</i> Your details
-          </span>
-          <span className={mode === "device-binding" ? "current" : ""}>
-            <i>2</i> Your device
-          </span>
-          <span>
-            <i>3</i> Your wallet
-          </span>
+  return <div className="auth-form-container">
+    <div className="eyebrow">{copy.kicker}</div>
+    <h1>{copy.heading}<span>.</span></h1>
+    <p className="auth-description">{copy.description}</p>
+    {confirmationNotice && <p className="auth-confirmation-notice" role="status">{confirmationNotice}</p>}
+    {callbackPending && <p className="auth-device-note" role="status"><LoaderCircle size={18} className="spin" />Confirming your sign-in link…</p>}
+    {mode === "device-binding" && <div className="device-preview-card">
+      <span className="device-preview-icon"><Monitor size={30} /></span>
+      <div><span className="eyebrow">SIGNED-IN ACCOUNT</span><h2>{deviceName || "This browser"}</h2><p>Only trust a browser you recognise.</p></div>
+    </div>}
+    <form onSubmit={submit} noValidate className="auth-form">
+      {mode === "signup" && <div className="auth-field">
+        <label htmlFor="name">Full name</label>
+        <input id="name" name="name" autoComplete="name" placeholder="Your name" value={name} onChange={event => setName(event.target.value)}
+          maxLength={80} required aria-invalid={!!errors.name} />
+        {errors.name && <span className="field-error">{errors.name}</span>}
+      </div>}
+      {hasEmail && <div className="auth-field">
+        <label htmlFor="email">Email address</label>
+        <input id="email" name="email" type="email" autoComplete="email" placeholder="you@example.com" value={email}
+          onChange={event => setEmail(event.target.value)} maxLength={254} required aria-invalid={!!errors.email} />
+        {errors.email && <span className="field-error">{errors.email}</span>}
+      </div>}
+      {mode === "otp" && <div className="auth-field">
+        <label htmlFor="otp-code">Email verification code</label>
+        <input id="otp-code" name="otp-code" className="otp-code-field" type="text" inputMode="numeric" autoComplete="one-time-code"
+          placeholder="Enter your code" value={code} onChange={event => setCode(event.target.value.replace(/\D/g, ""))}
+          maxLength={10} required aria-invalid={!!errors.code} aria-describedby={`otp-hint${errors.code ? " otp-error" : ""}`} />
+        <small id="otp-hint" className="otp-hint">Use the latest code in your email. If it contains a verification link, you can open that link instead.</small>
+        {errors.code && <span className="field-error" id="otp-error">{errors.code}</span>}
+      </div>}
+      {hasPassword && <PasswordField id="password" label={mode === "reset-password" ? "New password" : "Password"}
+        value={password} onChange={setPassword} error={errors.password} isNew={newPassword} />}
+      {newPassword && <>
+        <div className="password-checklist" aria-label="Password requirements"><span className={password.length >= 12 ? "passed" : ""}><Check size={11} />12 characters minimum</span></div>
+        <PasswordField id="confirmation" label="Confirm password" value={confirmation} onChange={setConfirmation} error={errors.confirmation} isNew />
+      </>}
+      {mode === "login" && <div className="auth-form-links"><span><ShieldCheck size={13} />Your account, securely signed in</span>
+        <Link href={"/forgot-password" + nextQuery}>Forgot password?</Link></div>}
+      {mode === "device-binding" && <>
+        <div className="auth-field"><label htmlFor="device-name">Browser name</label>
+          <input id="device-name" name="device-name" value={deviceName} onChange={event => setDeviceName(event.target.value)} maxLength={80} required />
         </div>
-      )}
-      <div className="eyebrow">{copy.kicker}</div>
-      <h1>
-        {copy.heading}
-        <span>.</span>
-      </h1>
-      <p className="auth-description">{copy.description}</p>
-
-      {mode === "device-binding" && (
-        <div className="device-preview-card">
-          <span className="device-preview-icon">
-            {deviceKind === "mobile" ? (
-              <Smartphone size={28} />
-            ) : (
-              <Monitor size={30} />
-            )}
-          </span>
-          <div>
-            <span className="eyebrow">CURRENT DEVICE</span>
-            <h2>{deviceName || "This browser"}</h2>
-            <p>Only add a device you recognise.</p>
-          </div>
-          <span className="badge neutral">Preview</span>
-        </div>
-      )}
-
-      {mode === "device-binding" && (
-        <>
-          <div className="device-location">
-            <span>Location not verified</span>
-            <span>Time zone: {timeZone || "Checking…"}</span>
-          </div>
-          <div className="device-security-badge">
-            <ShieldCheck size={18} />
-            <div>
-              AES-256-GCM encrypted sessions
-              <small>
-                Production security design · demo verification below
-              </small>
-            </div>
-          </div>
-        </>
-      )}
-
-      <form onSubmit={submit} noValidate className="auth-form">
-        {mode === "signup" && (
-          <div className="auth-field">
-            <label htmlFor="name">Full name</label>
-            <input
-              id="name"
-              name="name"
-              autoComplete="name"
-              placeholder="Your name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              maxLength={80}
-              required
-              aria-invalid={!!errors.name}
-              aria-describedby={errors.name ? "name-error" : undefined}
-            />
-            {errors.name && (
-              <span className="field-error" id="name-error">
-                {errors.name}
-              </span>
-            )}
-          </div>
-        )}
-        {hasEmail && (
-          <div className="auth-field">
-            <label htmlFor="email">Email address</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              maxLength={254}
-              required
-              aria-invalid={!!errors.email}
-              aria-describedby={errors.email ? "email-error" : undefined}
-            />
-            {errors.email && (
-              <span className="field-error" id="email-error">
-                {errors.email}
-              </span>
-            )}
-          </div>
-        )}
-        {hasPassword && (
-          <PasswordField
-            id="password"
-            label={mode === "reset-password" ? "New password" : "Password"}
-            value={password}
-            onChange={setPassword}
-            error={errors.password}
-            isNew={newPassword}
-          />
-        )}
-        {newPassword && (
-          <>
-            <PasswordChecklist password={password} />
-            <PasswordField
-              id="confirmation"
-              label="Confirm password"
-              value={confirmation}
-              onChange={setConfirmation}
-              error={errors.confirmation}
-              isNew
-            />
-          </>
-        )}
-        {mode === "login" && (
-          <div className="auth-form-links">
-            <span>
-              <ShieldCheck size={13} /> Your rules are waiting
-            </span>
-            <Link href={"/forgot-password" + nextQuery}>Forgot password?</Link>
-          </div>
-        )}
-        {mode === "device-binding" && (
-          <>
-            <div className="auth-field">
-              <span className="otp-label" id="otp-label">
-                Six-digit verification code
-              </span>
-              <div
-                className="otp-inputs"
-                role="group"
-                aria-labelledby="otp-label"
-                onPaste={(event) => {
-                  event.preventDefault();
-                  enterDigit(0, event.clipboardData.getData("text"));
-                }}
-              >
-                {otp.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={(element) => {
-                      otpRefs.current[index] = element;
-                    }}
-                    aria-label={"Verification digit " + (index + 1)}
-                    aria-invalid={!!errors.otp}
-                    aria-describedby={errors.otp ? "otp-error" : "otp-hint"}
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete={index === 0 ? "one-time-code" : "off"}
-                    value={digit}
-                    maxLength={6}
-                    onChange={(event) => enterDigit(index, event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Backspace" && !digit && index > 0)
-                        otpRefs.current[index - 1]?.focus();
-                      if (event.key === "ArrowLeft" && index > 0) {
-                        event.preventDefault();
-                        otpRefs.current[index - 1]?.focus();
-                      }
-                      if (event.key === "ArrowRight" && index < 5) {
-                        event.preventDefault();
-                        otpRefs.current[index + 1]?.focus();
-                      }
-                    }}
-                  />
-                ))}
-              </div>
-              <small className="otp-hint" id="otp-hint">
-                Demo code: <b>123456</b> · No verification email is sent.
-              </small>
-              {errors.otp && (
-                <span className="field-error" id="otp-error" role="alert">
-                  {errors.otp}
-                </span>
-              )}
-            </div>
-            <div className="auth-field">
-              <label htmlFor="device-name">Device name</label>
-              <input
-                id="device-name"
-                name="device-name"
-                value={deviceName}
-                onChange={(event) => setDeviceName(event.target.value)}
-                maxLength={60}
-                required
-                aria-invalid={!!errors.device}
-                aria-describedby={errors.device ? "device-error" : undefined}
-              />
-            </div>
-            <label className="auth-checkbox">
-              <input
-                type="checkbox"
-                checked={trustDevice}
-                onChange={(event) => setTrustDevice(event.target.checked)}
-              />
-              I recognise this device and want to trust it.
-            </label>
-            {errors.device && (
-              <span className="field-error" id="device-error">
-                {errors.device}
-              </span>
-            )}
-            <div className="auth-device-note">
-              <ShieldCheck size={16} />
-              <p>
-                This previews your trusted-device setup. Device verification
-                connects with account authentication.
-              </p>
-            </div>
-          </>
-        )}
-        <button
-          type="submit"
-          className="button primary full-width auth-submit"
-          disabled={pending}
-        >
-          {pending ? (
-            <>
-              <LoaderCircle size={17} className="spin" /> Taking you there…
-            </>
-          ) : (
-            <>
-              {copy.action}
-              <ArrowRight size={16} />
-            </>
-          )}
-        </button>
-        {(mode === "forgot-password" || mode === "reset-password") && (
-          <Link href={"/login" + nextQuery} className="auth-back-link">
-            <ArrowLeft size={14} /> Back to login
-          </Link>
-        )}
-        {mode === "device-binding" && (
-          <Link href={destination} className="auth-back-link">
-            Skip for this preview <ArrowRight size={14} />
-          </Link>
-        )}
-      </form>
-
-      {mode === "login" && (
-        <>
-          <div className="auth-divider">
-            <span>or take a look around</span>
-          </div>
-          <Link
-            href={destination}
-            className="button secondary full-width auth-demo-link"
-          >
-            Explore the demo <ArrowUpRightIcon />
-          </Link>
-          <p className="auth-switch">
-            New around here?{" "}
-            <Link href={"/signup" + nextQuery}>
-              Create an account <ArrowRight size={13} />
-            </Link>
-          </p>
-        </>
-      )}
-      {mode === "signup" && (
-        <p className="auth-switch">
-          Already have an account?{" "}
-          <Link href={"/login" + nextQuery}>
-            Log in <ArrowRight size={13} />
-          </Link>
-        </p>
-      )}
-      <p className="auth-preview-note">
-        <KeyRound size={12} /> Demo account flow. Use sample details; passwords
-        and codes stay in this browser.
-      </p>
-    </div>
-  );
-}
-
-function ArrowUpRightIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="16"
-      height="16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden="true"
-    >
-      <path d="M7 17 17 7M7 7h10v10" />
-    </svg>
-  );
+        <label className="auth-checkbox"><input type="checkbox" checked={trustDevice} onChange={event => setTrustDevice(event.target.checked)} />I recognise this browser and want to trust it.</label>
+        {errors.device && <span className="field-error">{errors.device}</span>}
+      </>}
+      {errors.form && <p className="form-error" role="alert">{errors.form}</p>}
+      <button type="submit" className="button primary full-width auth-submit" disabled={pending}>
+        {pending ? <><LoaderCircle size={17} className="spin" />Please wait…</> : <>{copy.action}<ArrowRight size={16} /></>}
+      </button>
+      {mode === "otp" && <button type="button" className="text-button auth-resend" disabled={pending || resendWait > 0} onClick={() => resend(verificationIntent)}>
+        {resendWait ? `Resend email in ${resendWait}s` : "Resend verification email"}
+      </button>}
+      {(mode === "forgot-password" || mode === "reset-password" || mode === "device-binding" || mode === "otp") &&
+        <Link href={"/login" + nextQuery} className="auth-back-link"><ArrowLeft size={14} />Back to login</Link>}
+    </form>
+    {mode === "login" && <p className="auth-switch">New to RETREST? <Link href={"/signup" + nextQuery}>Create an account <ArrowRight size={13} /></Link></p>}
+    {mode === "signup" && <p className="auth-switch">Already have an account? <Link href={"/login" + nextQuery}>Log in <ArrowRight size={13} /></Link></p>}
+    <Link href="/shield?demo=1" className="auth-back-link">Explore the demo <ArrowRight size={14} /></Link>
+  </div>;
 }

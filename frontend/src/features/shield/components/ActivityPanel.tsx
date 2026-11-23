@@ -22,7 +22,7 @@ export function ActivityPanel() {
             LIVE
           </span>
         </h2>
-        <Link href="/transactions" className="text-button">
+        <Link href="/transactions?demo=1" className="text-button">
           View all <ArrowUpRight size={13} />
         </Link>
       </div>

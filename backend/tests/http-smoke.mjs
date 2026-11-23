@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { createHmac, randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const origin = process.env.TEST_ORIGIN ?? "http://localhost:3000";
-const env = readFileSync(new URL("../.env", import.meta.url), "utf8");
+const health = await (await fetch(`${origin}/api/health`)).json();
+assert.equal(health.test_instance, true, "HTTP smoke tests require NODE_ENV=test and DATABASE_PATH=:memory:. Refusing to mutate a persistent demo.");
+const envPath = new URL("../.env", import.meta.url);
+const env = existsSync(envPath) ? readFileSync(envPath, "utf8") : "";
 const webhookSecret = process.env.CARD_WEBHOOK_SECRET ?? env.match(/^CARD_WEBHOOK_SECRET=(.+)$/m)?.[1];
 assert.ok(webhookSecret, "Configure CARD_WEBHOOK_SECRET before testing");
 const session = await fetch(`${origin}/api/session`, { method: "POST", headers: { Origin: origin } });

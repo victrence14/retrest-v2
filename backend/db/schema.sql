@@ -96,4 +96,6 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transaction_logs(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_page ON transaction_logs(user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_page ON notifications(user_id, created_at DESC, id DESC);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_billing ON merchant_subscriptions(user_id, next_billing_date);

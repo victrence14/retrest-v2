@@ -33,7 +33,7 @@ export function ShieldView() {
           A little heads-up: <b>{firstPaused ? `${firstPaused.merchant_name} is paused.` : "Your shield is up."}</b>{" "}
           {firstPaused ? "We’ll block every charge until you say otherwise." : "Every merchant is following your rules."}
         </p>
-        <button onClick={() => router.push("/insights")}>
+        <button onClick={() => router.push("/insights?demo=1")}>
           See your insights <ArrowRight size={15} />
         </button>
       </div>

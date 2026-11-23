@@ -1,0 +1,844 @@
+:root {
+  --control-bg: #0c1322;
+  --surface-raised: #162133;
+  --surface-hover: #1d2940;
+  --accent-text: #b0b4ff;
+  --accent-soft: #6366f117;
+  --theme-shadow: 0 8px 28px #00000025;
+  --toast-success-bg: #142b24;
+  --toast-success-text: #d8f5e8;
+  --toast-error-bg: #332027;
+  --toast-error-text: #ffe0e4;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5f7fb;
+  --sidebar: #ffffff;
+  --panel: #ffffff;
+  --line: #172b4d1c;
+  --text: #17243b;
+  --muted: #53647c;
+  --subtle: #65758d;
+  --lime: #047857;
+  --lime-dark: #0478570f;
+  --amber: #a75b05;
+  --red: #c92b3c;
+  --indigo: #5046d8;
+  --cyan: #0369a1;
+  --control-bg: #f0f3fa;
+  --surface-raised: #edf1f8;
+  --surface-hover: #e3e9f4;
+  --accent-text: #5146c9;
+  --accent-soft: #635bff0c;
+  --theme-shadow: 0 8px 28px #172b4d0d;
+  --toast-success-bg: #ecfdf4;
+  --toast-success-text: #07543a;
+  --toast-error-bg: #fff1f2;
+  --toast-error-text: #9f2232;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--control-bg);
+}
+.theme-toggle > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  min-width: 38px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 550;
+}
+html[data-theme="light"] .theme-toggle > [data-mode="light"],
+html[data-theme="dark"] .theme-toggle > [data-mode="dark"] {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 2px 7px #0000000d;
+}
+.theme-toggle > button:hover {
+  color: var(--text);
+}
+.auth-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto;
+}
+.page-appearance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  width: min(620px, 100%);
+}
+.appearance-panel {
+  padding: 22px;
+  display: grid;
+  gap: 16px;
+}
+.appearance-panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 17px;
+}
+.appearance-panel p {
+  color: var(--muted);
+  line-height: 1.8;
+}
+.appearance-panel .theme-toggle {
+  justify-self: start;
+}
+.appearance-system {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.auth-resend {
+  display: flex;
+  justify-content: center;
+  margin: 18px auto 0;
+  min-height: 36px;
+}
+.auth-confirmation-notice {
+  padding: 14px;
+  margin-bottom: 20px;
+  color: var(--lime);
+  background: var(--lime-dark);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  line-height: 1.8;
+}
+.auth-field .otp-code-field {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 3px;
+  padding: 12px;
+}
+.auth-field .otp-code-field::placeholder {
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.toast-viewport {
+  position: fixed;
+  right: max(24px, env(safe-area-inset-right));
+  bottom: max(24px, env(safe-area-inset-bottom));
+  display: grid;
+  gap: 10px;
+  width: min(440px, calc(100vw - 32px));
+  z-index: 2000;
+  pointer-events: none;
+}
+body:has(.bottom-nav) .toast-viewport {
+  bottom: calc(110px + env(safe-area-inset-bottom));
+}
+.toast-notice {
+  min-width: 0;
+  pointer-events: auto;
+}
+.toast-viewport .toast {
+  position: static;
+  inset: auto;
+  transform: none;
+  width: 100%;
+  max-width: none;
+  min-height: 58px;
+  gap: 12px;
+  padding: 13px 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  background: var(--toast-success-bg);
+  color: var(--toast-success-text);
+  border-color: #10b98145;
+  box-shadow: var(--theme-shadow);
+  animation: notice-arrive 0.18s ease-out;
+}
+.toast-viewport .toast.error {
+  background: var(--toast-error-bg);
+  color: var(--toast-error-text);
+  border-color: #ef444445;
+}
+.toast-viewport .toast > svg {
+  color: var(--lime);
+}
+.toast-viewport .toast.error > svg {
+  color: var(--red);
+}
+.toast-viewport .toast > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.toast-viewport .toast > button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  color: inherit;
+  border-radius: 6px;
+}
+.toast-viewport .toast > button:hover {
+  background: #80808012;
+}
+@keyframes notice-arrive {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* Keep the original visual hierarchy while giving every route a light palette. */
+html[data-theme="light"]
+  :is(
+    .landing-page,
+    .invite-page,
+    .auth-content,
+    .topbar,
+    .landing-header,
+    .bottom-nav
+  ) {
+  background: var(--bg);
+  color: var(--text);
+}
+html[data-theme="light"]
+  :is(
+    input,
+    select,
+    textarea,
+    .currency-control,
+    .device-preview-card,
+    .otp-inputs > input
+  ) {
+  background: var(--control-bg);
+  color: var(--text);
+  border-color: var(--line);
+}
+html[data-theme="light"]
+  :is(.panel, .modal, .auth-floating-note, .auth-floating-pool) {
+  background: var(--panel);
+  border-color: var(--line);
+  box-shadow: var(--theme-shadow);
+}
+html[data-theme="light"] .secondary {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+html[data-theme="light"] .secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--line);
+}
+html[data-theme="light"]
+  :is(
+    .icon-button,
+    .breadcrumb,
+    .workspace-label,
+    .nav-item,
+    .live-chip,
+    .help-button,
+    .profile-button small,
+    .mini-label
+  ) {
+  color: var(--muted);
+}
+html[data-theme="light"]
+  :is(.icon-button:hover, .nav-item:hover, .bottom-nav-item:hover) {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+html[data-theme="light"]
+  :is(
+    .nav-item.selected,
+    .nav-item.selected > svg,
+    .nav-count,
+    .bottom-nav-item.selected
+  ) {
+  color: var(--indigo);
+  background-color: var(--accent-soft);
+}
+html[data-theme="light"]
+  :is(
+    .text-button,
+    .text-button:hover,
+    .receipt-link,
+    .simulator-trigger,
+    .brand-dot
+  ) {
+  color: var(--accent-text);
+}
+html[data-theme="light"]
+  :is(
+    .badge.green,
+    .badge.approved,
+    .subtle,
+    .lime-text,
+    .password-checklist .passed
+  ) {
+  color: var(--lime);
+}
+html[data-theme="light"] :is(.badge.amber) {
+  color: var(--amber);
+}
+html[data-theme="light"]
+  :is(.badge.red, .badge.declined, .form-error, .field-error) {
+  color: var(--red);
+}
+html[data-theme="light"] .badge.neutral {
+  color: var(--muted);
+  background: var(--control-bg);
+}
+html[data-theme="light"] .auth-story {
+  background:
+    radial-gradient(ellipse at 20% 20%, #6366f112, transparent 65%), #edf1fb;
+}
+html[data-theme="light"]
+  :is(
+    .auth-story-kicker,
+    .auth-story-content > p,
+    .auth-story-points > span,
+    .auth-story-footer,
+    .auth-description,
+    .auth-success > p,
+    .auth-field > label,
+    .auth-password-wrap > button,
+    .auth-form-links > span,
+    .auth-switch,
+    .auth-content-footer,
+    .auth-checkbox,
+    .auth-device-note,
+    .device-preview-card p,
+    .otp-label,
+    .otp-hint,
+    .password-checklist,
+    .preview-pill,
+    .auth-support-link,
+    .auth-floating-note small,
+    .auth-floating-pool small
+  ) {
+  color: var(--muted);
+}
+html[data-theme="light"]
+  :is(
+    .auth-form-container > .eyebrow,
+    .auth-form-container h1 span,
+    .auth-story h2 span,
+    .auth-form-links > a,
+    .auth-switch > a,
+    .auth-back-link,
+    .auth-success-icon,
+    .device-preview-icon
+  ) {
+  color: var(--accent-text);
+}
+html[data-theme="light"]
+  :is(.auth-floating-note b, .auth-floating-pool b, .breadcrumb > span) {
+  color: var(--text);
+}
+
+/* Shared surfaces and controls used by the landing page, demo and account. */
+html[data-theme="light"]
+  :is(
+    .hero-product,
+    .feature-card,
+    .authorization-showcase,
+    .standalone-dialog
+  ) {
+  background: var(--panel);
+  border-color: var(--line);
+  box-shadow: var(--theme-shadow);
+}
+html[data-theme="light"] :is(.hero-pill, .preview-logo, .modal) {
+  border-color: var(--line);
+}
+html[data-theme="light"]
+  :is(
+    .icon-well,
+    .count-badge,
+    .segmented,
+    .wallet-currencies,
+    .pool-summary-strip,
+    .fx-rate,
+    .summary-totals > div,
+    .pool-form-member > span,
+    .chat-message > div,
+    .merchant-info,
+    .bottom-count,
+    .modal-close,
+    .hero-pill,
+    .flow-icon
+  ) {
+  background: var(--control-bg);
+}
+html[data-theme="light"]
+  :is(.segmented > button.selected, .demo-scenario, .authorization-flow > div) {
+  background: var(--surface-raised);
+}
+html[data-theme="light"] .demo-scenario:hover {
+  background: var(--surface-hover);
+}
+html[data-theme="light"] .hero-actions > .secondary {
+  background: var(--surface-raised);
+}
+html[data-theme="light"] :is(th, .balance-bar > i) {
+  background: var(--panel);
+}
+html[data-theme="light"] tbody > tr:hover {
+  background: var(--control-bg);
+}
+html[data-theme="light"]
+  :is(
+    .balance-bar,
+    .pool-progress,
+    .category-bar,
+    .legend-dot,
+    .toggle:not(.on)
+  ) {
+  background: #d7dfed;
+}
+html[data-theme="light"] .toggle:not(.on) > span {
+  background: #64748b;
+}
+html[data-theme="light"]
+  :is(
+    .bottom-insight,
+    .chat-message.user > div,
+    .authorization-flow > .flow-rule
+  ) {
+  background: var(--accent-soft);
+}
+html[data-theme="light"] .invite-link-text {
+  background: var(--control-bg);
+  color: var(--accent-text);
+}
+html[data-theme="light"] .floating-security {
+  background: var(--panel);
+  color: var(--accent-text);
+  box-shadow: var(--theme-shadow);
+}
+html[data-theme="light"] .insight-savings {
+  background:
+    radial-gradient(ellipse at top right, #10b9810c, transparent 70%),
+    var(--panel);
+}
+html[data-theme="light"] .monthly-brief-card {
+  background:
+    radial-gradient(ellipse at top left, #6366f10c, transparent 85%),
+    var(--panel);
+}
+html[data-theme="light"] .authorization-flow > div.flow-approved {
+  background: var(--lime-dark);
+}
+html[data-theme="light"] .modal {
+  scrollbar-color: #a4b1c6 transparent;
+}
+
+/* Muted labels retain readable contrast on pale surfaces. */
+html[data-theme="light"]
+  :is(
+    .icon-well,
+    .sidebar-note p,
+    .profile-button > svg,
+    .safe-amount > span,
+    .safe-spend > p,
+    .balance-details > span,
+    .wallet-currencies > span,
+    .shield-summary-number > span,
+    .shield-summary > p,
+    .saved-label,
+    .summary-note,
+    .section-header p,
+    .count-badge,
+    .segmented > button,
+    .segmented > button > span,
+    .search-field,
+    th,
+    .merchant-cell small,
+    .renewal-count,
+    .amount-cycle,
+    .table-footer,
+    .activity-item p,
+    .activity-item p > span,
+    .activity-meta small,
+    .decision-code,
+    .activity-footer p,
+    .activity-footer p > span,
+    .bottom-insight,
+    .page-footer,
+    .page-footer .brand-symbol,
+    .footer-dot,
+    .bottom-nav-item,
+    .bottom-count,
+    .bottom-live > svg
+  ) {
+  color: var(--muted);
+}
+html[data-theme="light"]
+  :is(
+    .pool-summary-strip small,
+    .pool-card-header p,
+    .pool-amount > span,
+    .pool-renewal,
+    .pool-member b small,
+    .pool-member > div > span,
+    .pool-fallback > div,
+    .pool-fallback small,
+    .new-pool-card p,
+    .avatar-stack > span:last-child,
+    .fx-fees-note,
+    .fx-fees-note > small,
+    .fx-currency > svg,
+    .fx-rate > svg,
+    .rate-label,
+    .fx-setting p,
+    .fx-bottom,
+    .insight-savings > small,
+    .insight-savings > p,
+    .insight-savings > div > span,
+    .monthly-brief-card .eyebrow,
+    .monthly-brief-card > p,
+    .monthly-brief-card > small,
+    .brief-tags > span,
+    .zombie-row p,
+    .zombie-row > span > small
+  ) {
+  color: var(--muted);
+}
+html[data-theme="light"]
+  :is(
+    .modal-description,
+    .modal label,
+    .invite-public-card label,
+    .form-callout,
+    .split-preview,
+    .demo-card-mini > div > span,
+    .demo-scenario small,
+    .scenario-tag,
+    .demo-scenario > svg,
+    .demo-result > p,
+    .demo-result dt,
+    .demo-waiting,
+    .demo-waiting small,
+    .demo-disclaimer,
+    .merchant-info > span,
+    .pool-form-member > span,
+    .pool-created p,
+    .empty-state,
+    .empty-state p,
+    .notification-card p,
+    .how-it-works p,
+    .summary-totals small,
+    .summary-narrative p,
+    .category-breakdown > div > div:first-child,
+    .summary-shield-savings small,
+    .summary-email > small,
+    .summary-data-note,
+    .summary-empty p
+  ) {
+  color: var(--muted);
+}
+html[data-theme="light"]
+  :is(
+    .chat-header p,
+    .chat-preview-banner,
+    .chat-day,
+    .chat-sender,
+    .chat-message small,
+    .chat-compose-note,
+    .support-help-panel p,
+    .support-receipt-panel p,
+    .support-topics > button,
+    .support-privacy-note,
+    .history-stat > span,
+    .history-stat > strong > i,
+    .history-stat small,
+    .history-search,
+    .history-merchant small,
+    .history-time,
+    .decline-details p,
+    .history-pagination,
+    .history-empty,
+    .account-profile-intro > div > span,
+    .account-form label,
+    .optional-label,
+    .account-form-footer > span,
+    .account-preference p,
+    .account-balance-pair span,
+    .security-link p,
+    .device-small-icon,
+    .trusted-device small,
+    .no-device,
+    .no-device p,
+    .security-preview-note,
+    .account-access-panel p
+  ) {
+  color: var(--muted);
+}
+html[data-theme="light"]
+  :is(
+    .auth-divider,
+    .auth-preview-note,
+    .auth-stepper > span,
+    .device-security-badge small,
+    .device-location,
+    .landing-header > nav,
+    .landing-currencies,
+    .landing-currencies > span:not(.flag),
+    .hero-pill,
+    .hero-copy > p,
+    .play-circle,
+    .hero-proof,
+    .hero-proof-icon,
+    .preview-topline,
+    .preview-list-title b,
+    .preview-list-title > small,
+    .preview-merchant-name > small,
+    .preview-price > small,
+    .preview-event small,
+    .merchant-marquee,
+    .merchant-marquee > span,
+    .merchant-marquee > span > b,
+    .landing-section-heading .eyebrow,
+    .landing-section-heading > p,
+    .feature-card > small,
+    .feature-card > p,
+    .feature-example,
+    .authorization-showcase p,
+    .flow-icon,
+    .authorization-flow small,
+    .authorization-flow > div > svg,
+    .flow-approved small,
+    .landing-final-cta > p,
+    .landing-footer > .landing-brand,
+    .landing-footer > span,
+    .invite-public-card > p,
+    .invite-public-card form > small,
+    .invite-shield,
+    .unavailable-page p
+  ) {
+  color: var(--muted);
+}
+
+html[data-theme="light"]
+  :is(
+    .panel-top,
+    .safe-amount,
+    .balance-details b,
+    .wallet-currencies b,
+    .segmented > button.selected,
+    .renewal-date,
+    .bottom-insight b,
+    .demo-result dd,
+    .merchant-info b,
+    .summary-narrative b,
+    .chat-message p,
+    .landing-login,
+    .preview-list-title,
+    .hero-proof b
+  ) {
+  color: var(--text);
+}
+html[data-theme="light"]
+  :is(
+    .orbit-art,
+    .page-heading h1 > span,
+    .modal h2 > span,
+    .pool-indicator,
+    .activity-meta a,
+    .bottom-insight > button,
+    .insight-symbol,
+    .member-status.scheduled,
+    .new-pool-card > span:first-child,
+    .new-pool-card > b,
+    .brief-orb,
+    .form-callout > svg,
+    .demo-card-mini > svg,
+    .scenario-icon.pool,
+    .demo-reset,
+    .how-it-works > div > svg,
+    .summary-narrative,
+    .chat-guide-avatar,
+    .chat-small-avatar,
+    .chat-quick-questions > button,
+    .support-receipt-panel > svg,
+    .account-avatar,
+    .auth-story-points svg,
+    .auth-floating-pool,
+    .auth-stepper > .current,
+    .auth-device-note > svg,
+    .landing-section-heading h2 span,
+    .feature-icon,
+    .flow-rule .flow-icon,
+    .landing-final-cta h2 > span,
+    .landing-final-cta > .text-button
+  ) {
+  color: var(--accent-text);
+}
+html[data-theme="light"]
+  :is(.landing-header > nav > a:hover, .bottom-nav-item:hover) {
+  color: var(--text);
+}
+html[data-theme="light"] .hero-copy h1 > span {
+  background-image: linear-gradient(110deg, #5146c9, #4361c9 50%, #0369a1);
+}
+html[data-theme="light"]
+  :is(
+    .shield-summary > strong,
+    .feed-live,
+    .activity-icon,
+    .decision-code.approved,
+    .pulse-line,
+    .bottom-live,
+    .pool-amount small,
+    .member-paid,
+    .fx-fees-note b,
+    .insight-savings > .icon-well,
+    .insight-savings > strong,
+    .scenario-icon,
+    .demo-result > div:first-child,
+    .renewal-confirmation,
+    .success-circle,
+    .summary-shield-savings,
+    .history-transaction-icon,
+    .account-profile-intro > svg,
+    .auth-floating-note,
+    .auth-stepper > .done,
+    .preview-event > span,
+    .preview-event b,
+    .feature-icon.emerald,
+    .authorization-flow > .flow-approved,
+    .flow-approved .flow-icon,
+    .invite-success
+  ) {
+  color: var(--lime);
+}
+html[data-theme="light"]
+  :is(
+    .paused-row .shield-cell > span,
+    .activity-icon.blocked,
+    .activity-icon.hike,
+    .decision-code.declined,
+    .scenario-icon.blocked,
+    .scenario-icon.hike,
+    .demo-result.declined > div:first-child,
+    .merchant-pause:hover,
+    .history-transaction-icon.blocked,
+    .decline-details,
+    .remove-device,
+    .account-signout,
+    .feature-icon.red
+  ) {
+  color: var(--red);
+}
+html[data-theme="light"]
+  :is(
+    .renewal-count.soon,
+    .fx-activity,
+    .member-status:not(.scheduled),
+    .fx-setting .icon-well,
+    .zombie-panel h2 > svg,
+    .scenario-icon.fx,
+    .notification-card > svg
+  ) {
+  color: var(--amber);
+}
+html[data-theme="light"] .device-security-badge,
+html[data-theme="light"] body .feature-icon.cyan {
+  color: var(--cyan);
+}
+
+/* Payment-card artwork keeps its own high-contrast palette in both modes. */
+.auth-preview-card,
+.master-card,
+.landing-virtual-card {
+  color: #f5f6ff;
+}
+
+@media (max-width: 1100px) {
+  .topbar-actions .theme-toggle > button > span {
+    display: none;
+  }
+  .topbar-actions .theme-toggle > button {
+    padding-inline: 7px;
+  }
+}
+@media (max-width: 760px) {
+  .toast-viewport {
+    right: 16px;
+    bottom: max(18px, env(safe-area-inset-bottom));
+  }
+  .theme-toggle > button {
+    min-height: 38px;
+    min-width: 38px;
+    padding-inline: 8px;
+  }
+  .auth-topbar-actions {
+    gap: 10px;
+  }
+}
+@media (max-width: 600px) {
+  .topbar .header-brand > b,
+  .topbar .simulator-trigger > span {
+    display: none;
+  }
+  .topbar .simulator-trigger {
+    min-width: 34px;
+    min-height: 38px;
+    padding: 8px;
+    justify-content: center;
+  }
+  .landing-header-actions > .button {
+    display: none;
+  }
+  .account-app .notification-button {
+    display: grid;
+    place-items: center;
+  }
+  .auth-topbar .preview-pill {
+    display: none;
+  }
+  .auth-topbar-actions .theme-toggle > button > span,
+  .landing-header-actions .theme-toggle > button > span {
+    display: none;
+  }
+  .auth-topbar-actions .auth-support-link {
+    font-size: 0;
+    gap: 0;
+    width: 32px;
+    min-height: 38px;
+    justify-content: center;
+  }
+  .auth-topbar-actions .auth-support-link > svg:last-child {
+    display: none;
+  }
+  .page-appearance-header {
+    gap: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-viewport .toast {
+    animation: none;
+  }
+}

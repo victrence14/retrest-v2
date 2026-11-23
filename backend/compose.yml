@@ -1,0 +1,32 @@
+services:
+  api:
+    image: retrest-api:local
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      RETREST_DEMO_ENABLED: "false"
+      PORT: "3001"
+    ports:
+      - "3001:3001"
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 15s
+  email-worker:
+    image: retrest-api:local
+    profiles: ["email"]
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      RETREST_DEMO_ENABLED: "false"
+    command: ["npm", "run", "worker:email"]
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 15s
+    healthcheck:
+      disable: true
+    depends_on:
+      api:
+        condition: service_healthy

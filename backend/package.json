@@ -3,13 +3,21 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.18.0" },
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/server.ts",
     "start": "tsx src/server.ts",
+    "build": "tsc --noEmit",
+    "worker:email": "tsx src/workers/email-worker.ts",
+    "worker:email:once": "tsx src/workers/email-worker.ts --once",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
-    "test:http": "node tests/http-smoke.mjs"
+    "test:http": "tsx scripts/http-smoke.ts",
+    "test:http:remote": "node tests/http-smoke.mjs",
+    "test:database": "tsx --test tests/database.test.ts tests/features-database.test.ts",
+    "schema:export": "tsx scripts/export-schema.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
@@ -25,6 +33,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^22.19.0",
+    "supabase": "^3.3.0",
     "typescript": "~5.9.3"
   }
 }

@@ -12,6 +12,7 @@ import {
   Monitor,
   ShieldCheck,
   Smartphone,
+  SunMoon,
   UserRound,
 } from "lucide-react";
 import {
@@ -22,6 +23,8 @@ import {
 import { shortDate } from "@retrest/shared";
 import type { User } from "@retrest/shared";
 import SettingsPage from "./PreferencesPanel";
+import { ThemeToggle } from "@/features/theme/ThemeToggle";
+import { useTheme } from "@/features/theme/ThemeProvider";
 
 export default function AccountSettings({
   user,
@@ -35,6 +38,7 @@ export default function AccountSettings({
   notify: (message: string, error?: boolean) => void;
 }) {
   const router = useRouter();
+  const { preference, setPreference } = useTheme();
   const account = usePreviewAccount();
   const profile = account?.profile;
   const [name, setName] = useState(user.name);
@@ -55,10 +59,12 @@ export default function AccountSettings({
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
     ) {
       setError("Enter your name and a valid email address.");
+      notify("Enter your name and a valid email address.", true);
       return;
     }
     if (phone.trim() && !/^\+?[\d ()-]{7,22}$/.test(phone.trim())) {
       setError("Enter a valid phone number, including your country code.");
+      notify("Enter a valid phone number, including your country code.", true);
       return;
     }
     const address = email.trim().toLowerCase();
@@ -81,6 +87,12 @@ export default function AccountSettings({
   return (
     <div className="account-grid">
       <div className="account-main-column">
+        <section className="panel appearance-panel"><h2><SunMoon size={18} />Appearance</h2><p>Choose the appearance for your account and auth pages.</p>
+          <ThemeToggle /><button type="button" className="text-button appearance-system" aria-pressed={preference === "system"} onClick={() => {
+            if (preference === "system") return;
+            setPreference("system"); notify("Appearance now follows your device settings.");
+          }}><Monitor size={16} />Follow device settings{preference === "system" && <Check size={15} />}</button>
+        </section>
         <section className="panel account-panel">
           <div className="section-header">
             <div>
@@ -263,6 +275,7 @@ export default function AccountSettings({
           className="account-signout"
           onClick={() => {
             clearPreviewAccount();
+            notify("You have left the demo account preview.");
             router.push("/login");
           }}
         >

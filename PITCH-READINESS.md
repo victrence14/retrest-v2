@@ -1,5 +1,7 @@
 # RETREST: four-developer pitch handoff
 
+Historical planning document. The current implemented backend contracts and operations are documented in [the backend guide](./backend/README.md). Status claims and archived application paths below predate the versioned PostgreSQL account APIs; use the current guide for integrations.
+
 ## Target and priorities
 
 Prepare a reliable product demonstration using the restored [Next.js application](./archive/next-app), launched with `npm run dev` at `http://localhost:3000/shield`. Preserve its navy/purple design and existing journeys. This plan assigns work to four developers; it does not mean the tasks below have been implemented.

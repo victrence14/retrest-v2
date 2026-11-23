@@ -1,0 +1,15 @@
+**/node_modules
+**/.env
+**/.env.*
+**/.next
+**/data
+**/coverage
+**/test-results
+**/playwright-report
+.git
+.agents
+.codex
+frontend
+backend/supabase/.temp
+backend/supabase/.branches
+**/.DS_Store

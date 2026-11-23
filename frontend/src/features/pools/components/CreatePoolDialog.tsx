@@ -77,7 +77,7 @@ export function CreatePoolDialog({ subscriptionId }: { subscriptionId?: string }
             className="text-button"
             onClick={() => {
               closeDialog();
-              router.push("/pools");
+              router.push("/pools?demo=1");
             }}
           >
             See your pool <ArrowRight size={15} />

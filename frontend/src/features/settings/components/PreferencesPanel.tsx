@@ -5,6 +5,7 @@ import { CreditCard, ShieldCheck, Zap } from "lucide-react";
 import type { Dashboard, User } from "@retrest/shared";
 import { money } from "@retrest/shared";
 import { errorMessage } from "@/lib/api/client";
+import { useToast } from "@/hooks/useToast";
 import { fetchWorkspace } from "@/features/workspace/api";
 import { setAutoFxPreference } from "../api";
 import "../styles.css";
@@ -22,6 +23,7 @@ export interface SettingsPageProps {
 }
 
 export function SettingsPage({ user, busy: externalBusy = false, onStateChange, requestAutoFx, profile, accountActions, variant = "page" }: SettingsPageProps) {
+  const { notify } = useToast();
   const [confirmedUser, setConfirmedUser] = useState(user);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -40,8 +42,11 @@ export function SettingsPage({ user, busy: externalBusy = false, onStateChange, 
       setConfirmedUser(state.user); onStateChange?.(state);
       if (!!state.user.auto_fx_enabled !== requested) throw new Error("The server did not confirm this preference change. Please try again.");
       setMessage("Auto-conversion preference saved on the server.");
+      if (!requestAutoFx) notify("Auto-conversion preference saved.");
     } catch (error) {
-      setError(errorMessage(error));
+      const message = errorMessage(error);
+      setError(message);
+      if (!requestAutoFx) notify(message, true);
       try { const state = await fetchWorkspace(); setConfirmedUser(state.user); onStateChange?.(state); } catch { /* Preserve the last confirmed preference. */ }
     } finally { lock.current = false; setBusy(false); }
   }

@@ -25,7 +25,7 @@ export function PageHeading({ section }: { section: WorkspaceSection }) {
       </div>
       <div className="heading-actions">
         {accountPage ? (
-          <Link href={section === "settings" ? "/support" : "/transactions"} className="button secondary">
+          <Link href={section === "settings" ? "/support?demo=1" : "/transactions?demo=1"} className="button secondary">
             {section === "settings" ? <MessageCircle size={15} /> : <FileText size={15} />}{" "}
             {section === "settings" ? "Chat with us" : "View transactions"}
             <ArrowUpRight size={14} />

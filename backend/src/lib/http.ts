@@ -20,11 +20,13 @@ export const tolerateMalformedJson: ErrorRequestHandler = (error, request, _resp
   next(error);
 };
 
-export const errorHandler: ErrorRequestHandler = (error: unknown, _request, response, _next) => {
+export const errorHandler: ErrorRequestHandler = (error: unknown, request, response, next) => {
+  if (response.headersSent) return next(error);
+  if (error instanceof HttpError) return sendError(response, error.status, error.message);
   const status = typeof error === "object" && error !== null && "status" in error ? Number(error.status) : 500;
   if (status === 413) return sendError(response, 413, "Payload too large");
   const safeStatus = status >= 400 && status < 500 ? status : 500;
-  if (safeStatus === 500) console.error(error);
+  if (safeStatus === 500) console.error(JSON.stringify({ event: "request_error", request_id: response.locals.requestId, method: request.method }));
   sendError(response, safeStatus, safeStatus === 500 ? "An unexpected server error occurred." : "Invalid request.");
 };
 

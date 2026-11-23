@@ -2,18 +2,25 @@ import { notFound } from "next/navigation";
 import { money, shortDate } from "@retrest/shared";
 import { getInvite } from "@/lib/api/server";
 import { InvitePage } from "@/features/invites/components/InvitePage";
+import { AccountInvitePage } from "@/features/account/components/AccountInvitePage";
+import { requireAccountCookie } from "@/lib/api/account-session";
+import { ThemeToggle } from "@/features/theme/ThemeToggle";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+  if (/^[A-Za-z0-9_-]{43}$/.test(token)) {
+    await requireAccountCookie(`/invite/${token}`);
+    return <AccountInvitePage token={token} />;
+  }
   const invite = await getInvite(token);
   if (!invite) notFound();
   return (
     <div className="invite-page">
-      <div className="invite-page-brand">
+      <header className="page-appearance-header"><div className="invite-page-brand">
         retrest<span>↗</span>
-      </div>
+      </div><ThemeToggle /></header>
       <InvitePage
         token={token}
         name={invite.name}

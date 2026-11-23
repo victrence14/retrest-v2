@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowUpRight, BriefcaseBusiness, Download, FileText, LockKeyhole } from "lucide-react";
 import { money, shortDate } from "@retrest/shared";
 import { EmptyState, MerchantLogo } from "@/components/ui";
 import { useWorkspace } from "@/features/workspace/WorkspaceContext";
+import { useToast } from "@/hooks/useToast";
+import { errorMessage } from "@/lib/api/client";
+import { downloadBusinessExport } from "../api";
 
 type CurrencyFilter = "all" | "NGN" | "USD";
 const CURRENCY_FILTERS: CurrencyFilter[] = ["all", "NGN", "USD"];
@@ -12,6 +15,9 @@ const CURRENCY_FILTERS: CurrencyFilter[] = ["all", "NGN", "USD"];
 /** Approved business expenses for a month, with a downloadable receipt pack. */
 export function VaultPanel() {
   const { data } = useWorkspace();
+  const { notify } = useToast();
+  const [downloading, setDownloading] = useState(false);
+  const downloadLock = useRef(false);
   const [format, setFormat] = useState<"csv" | "pdf">("csv");
   const [currencyFilter, setCurrencyFilter] = useState<CurrencyFilter>("all");
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -23,6 +29,16 @@ export function VaultPanel() {
       (currencyFilter === "all" || t.currency === currencyFilter),
   );
 
+  async function exportReceipts() {
+    if (downloadLock.current) return;
+    downloadLock.current = true; setDownloading(true);
+    try {
+      await downloadBusinessExport(month, format);
+      notify("Receipt pack download started.");
+    } catch (error) { notify(errorMessage(error), true); }
+    finally { downloadLock.current = false; setDownloading(false); }
+  }
+
   return (
     <section className="panel vault-panel">
       <div className="section-header">
@@ -33,13 +49,13 @@ export function VaultPanel() {
           <p>Every work expense. Every receipt. Already in one place.</p>
         </div>
         <div className="export-controls">
-          <select aria-label="Export receipt format" value={format} onChange={(e) => setFormat(e.target.value as "csv" | "pdf")}>
+          <select aria-label="Export receipt format" disabled={downloading} value={format} onChange={(e) => setFormat(e.target.value as "csv" | "pdf")}>
             <option value="csv">CSV</option>
             <option value="pdf">PDF</option>
           </select>
-          <a className="button primary" href={`/api/export?format=${format}&month=${month}`}>
-            <Download size={15} /> Export receipt pack
-          </a>
+          <button type="button" className="button primary" disabled={downloading} onClick={() => void exportReceipts()}>
+            <Download size={15} /> {downloading ? "Preparing receipt pack…" : "Export receipt pack"}
+          </button>
         </div>
       </div>
       <div className="vault-toolbar">
@@ -51,7 +67,7 @@ export function VaultPanel() {
           ))}
         </div>
         <label>
-          <input type="month" aria-label="Receipt month" value={month} onChange={(e) => setMonth(e.target.value)} />
+          <input type="month" aria-label="Receipt month" disabled={downloading} value={month} onChange={(e) => setMonth(e.target.value)} />
         </label>
       </div>
       <div className="table-scroll">

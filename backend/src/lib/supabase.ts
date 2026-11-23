@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { SupabaseConfig } from "../config.ts";
+import { timeoutFetch } from "./fetch.ts";
 
 export interface SupabaseClients {
   auth: SupabaseClient;
@@ -10,9 +11,9 @@ const auth = { persistSession: false, autoRefreshToken: false, detectSessionInUr
 
 export function createSupabaseClients(config: SupabaseConfig): SupabaseClients {
   return {
-    auth: createClient(config.url, config.anonKey, { auth }),
+    auth: createClient(config.url, config.anonKey, { auth, global: { fetch: timeoutFetch() } }),
     forUser: (token) =>
-      createClient(config.url, config.anonKey, { auth, global: { headers: { Authorization: `Bearer ${token}` } } }),
+      createClient(config.url, config.anonKey, { auth, global: { fetch: timeoutFetch(), headers: { Authorization: `Bearer ${token}` } } }),
   };
 }
 
@@ -20,5 +21,5 @@ export function createSupabaseClients(config: SupabaseConfig): SupabaseClients {
 // User-facing routes MUST use forUser(accessToken) instead.
 export function createAdminClient(config: SupabaseConfig): SupabaseClient {
   if (!config.serviceRoleKey) throw new Error("This administrative job requires SUPABASE_SERVICE_ROLE_KEY.");
-  return createClient(config.url, config.serviceRoleKey, { auth });
+  return createClient(config.url, config.serviceRoleKey, { auth, global: { fetch: timeoutFetch() } });
 }

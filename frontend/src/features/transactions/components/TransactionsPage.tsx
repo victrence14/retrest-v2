@@ -36,7 +36,7 @@ export function TransactionsPage({ user, transactions }: TransactionsPageProps) 
       <section className="panel history-stat"><span><ShieldOff size={16} />Blocked in this snapshot</span><strong>{blocked.length}<i>attempts</i></strong><small>Declines preserve wallet funds</small></section>
     </div>
     <section className="panel history-panel">
-      <div className="section-header"><div><h2>Recent payment history <span className="count-badge">{transactions.length}</span></h2><p>Latest 100 records. Filters and pages apply to this snapshot.</p></div><Link href="/insights" className="text-button">Business receipt packs<ArrowUpRight size={14} /></Link></div>
+      <div className="section-header"><div><h2>Recent payment history <span className="count-badge">{transactions.length}</span></h2><p>Latest 100 records. Filters and pages apply to this snapshot.</p></div><Link href="/insights?demo=1" className="text-button">Business receipt packs<ArrowUpRight size={14} /></Link></div>
       <p className="fe2-history-scope">Older history needs the full history service. Monthly business exports include all matching approved expenses.</p>
       <div className="history-toolbar">
         <div className="segmented" aria-label="Filter transactions by status">{[["all", "All activity"], ["approved", "Approved"], ["blocked", "Blocked"], ["unsettled", "Unsettled"]].map(([value, label]) => <button key={value} type="button" className={status === value ? "selected" : ""} aria-pressed={status === value} onClick={() => { setStatus(value); setPage(1); }}>{label}</button>)}</div>
@@ -52,7 +52,7 @@ export function TransactionsPage({ user, transactions }: TransactionsPageProps) 
       {!rows.length && <div className="history-empty"><Search size={29} /><h3>No payments found.</h3><p>Try another merchant, currency, or month.</p><button type="button" className="button secondary" onClick={() => { setSearch(""); setStatus("all"); setCurrency("all"); setMonth(""); setPage(1); }}>Clear filters</button></div>}
       <div className="history-pagination"><span>{filtered.length ? `${(currentPage - 1) * 10 + 1}–${Math.min(currentPage * 10, filtered.length)} of ${filtered.length} records` : "0 records"} · Recent snapshot</span><div><button type="button" className="icon-button" aria-label="Previous transactions page" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><ArrowLeft size={15} /></button><span>{currentPage} / {pageCount}</span><button type="button" className="icon-button" aria-label="Next transactions page" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}><ArrowRight size={15} /></button></div></div>
     </section>
-    <div className="bottom-insight"><ShieldOff size={17} /><p>A declined attempt is recorded with its reason. <b>It does not debit your wallet.</b></p><Link href="/support" className="text-button">Payment help<ArrowUpRight size={14} /></Link></div>
+    <div className="bottom-insight"><ShieldOff size={17} /><p>A declined attempt is recorded with its reason. <b>It does not debit your wallet.</b></p><Link href="/support?demo=1" className="text-button">Payment help<ArrowUpRight size={14} /></Link></div>
     {selectedTransaction && <TransactionDetail key={selectedTransaction.id} transaction={selectedTransaction} onClose={() => setSelected(null)} />}
   </div>;
 }

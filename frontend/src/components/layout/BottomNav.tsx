@@ -14,7 +14,7 @@ export function BottomNav({ section }: { section: WorkspaceSection }) {
       {PRIMARY_NAV.map(({ id, label, icon: Icon }) => (
         <Link
           key={id}
-          href={workspacePages[id].href}
+          href={`${workspacePages[id].href}?demo=1`}
           aria-label={label}
           aria-current={section === id ? "page" : undefined}
           className={"bottom-nav-item " + (section === id ? "selected" : "")}

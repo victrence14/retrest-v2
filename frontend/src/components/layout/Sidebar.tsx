@@ -19,7 +19,7 @@ export function Sidebar({ section }: { section: WorkspaceSection }) {
         {PRIMARY_NAV.map(({ id, label, icon: Icon }) => (
           <Link
             key={id}
-            href={workspacePages[id].href}
+            href={`${workspacePages[id].href}?demo=1`}
             aria-label={label}
             aria-current={section === id ? "page" : undefined}
             className={"nav-item " + (section === id ? "selected" : "")}
@@ -34,7 +34,7 @@ export function Sidebar({ section }: { section: WorkspaceSection }) {
         {UTILITY_NAV.map(({ id, label, icon: Icon }) => (
           <Link
             key={id}
-            href={workspacePages[id].href}
+            href={`${workspacePages[id].href}?demo=1`}
             aria-label={label}
             aria-current={section === id ? "page" : undefined}
             className={"nav-item " + (section === id ? "selected" : "")}
@@ -67,7 +67,7 @@ export function Sidebar({ section }: { section: WorkspaceSection }) {
         <button className="help-button" onClick={() => openDialog({ kind: "help" })}>
           <CircleHelp size={18} /> Help & how it works <ArrowUpRight size={15} />
         </button>
-        <Link href="/settings" className="profile-button" aria-label="Your profile">
+        <Link href="/settings?demo=1" className="profile-button" aria-label="Your profile">
           <Avatar name={profile.name} />
           <span>
             <b>{profile.name}</b>
